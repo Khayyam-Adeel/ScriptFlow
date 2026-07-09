@@ -1,0 +1,6 @@
+@PharmacyGateway.mock_HostAddress = http://localhost:5287
+
+GET {{PharmacyGateway.mock_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

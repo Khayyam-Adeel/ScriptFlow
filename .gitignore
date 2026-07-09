@@ -1,0 +1,18 @@
+## .NET
+bin/
+obj/
+*.user
+
+## Visual Studio
+.vs/
+
+## Rider
+.idea/
+
+## VS Code
+.vscode/
+
+## Angular / Node
+node_modules/
+dist/
+.angular/
