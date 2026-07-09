@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-Dispact.Worker-0295c14c-02a4-4ab4-93c6-49cfad0a5603</UserSecretsId>
+    <UserSecretsId>dotnet-Dispatch.Worker-0295c14c-02a4-4ab4-93c6-49cfad0a5603</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

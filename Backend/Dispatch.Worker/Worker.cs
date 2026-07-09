@@ -1,4 +1,4 @@
-namespace Dispact.Worker;
+namespace Dispatch.Worker;
 
 public class Worker : BackgroundService
 {

@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{1AE8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptFlow.API", "Backend\ScriptFlow.API\ScriptFlow.API.csproj", "{B696429F-499A-41CB-A395-A8553CBE2363}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dispact.Worker", "Backend\Dispact.Worker\Dispact.Worker.csproj", "{55CFB134-68ED-4423-9D6F-A5BFC7EA788B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dispatch.Worker", "Backend\Dispatch.Worker\Dispatch.Worker.csproj", "{55CFB134-68ED-4423-9D6F-A5BFC7EA788B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Service", "Backend\Notification.Service\Notification.Service.csproj", "{535D320B-227D-4FC1-9665-D96887A762DF}"
 EndProject
