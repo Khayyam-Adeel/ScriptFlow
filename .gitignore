@@ -16,4 +16,8 @@ obj/
 node_modules/
 dist/
 .angular/
-Aierrorcorrection.md 
+Aierrorcorrection.md
+
+## SQL (stored procedures / table types - not tracked in git)
+Backend/ScriptFlow.API/Infrastructure/Database/StoredProcedures/
+Backend/ScriptFlow.API/Infrastructure/Database/Types/ 
