@@ -8,5 +8,8 @@
       "Bash(dotnet --list-sdks)",
       "Bash(dotnet --list-runtimes)"
     ]
+  },
+  "enabledPlugins": {
+    "skill-creator@claude-plugins-official": true
   }
 }

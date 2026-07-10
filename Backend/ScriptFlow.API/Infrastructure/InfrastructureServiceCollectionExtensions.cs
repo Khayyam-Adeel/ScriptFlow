@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ScriptFlow.API.Application.Interfaces;
 using ScriptFlow.API.Infrastructure.Auth;
+using ScriptFlow.API.Infrastructure.Database;
 using ScriptFlow.API.Infrastructure.Persistence;
 
 namespace ScriptFlow.API.Infrastructure;
@@ -10,7 +11,11 @@ public static class InfrastructureServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
+
         // In-memory repositories, one instance for the lifetime of the app (no real DB yet).
+        // Swap these for SQL-backed implementations behind ISqlConnectionFactory once the
+        // stored procedures exist.
         services.AddSingleton<IPrescriptionRepository, InMemoryPrescriptionRepository>();
         services.AddSingleton<IPatientRepository, InMemoryPatientRepository>();
         services.AddSingleton<IProviderRepository, InMemoryProviderRepository>();

@@ -1,4 +1,5 @@
 using System.Text;
+using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -6,6 +7,7 @@ using ScriptFlow.API.Api.Middleware;
 using ScriptFlow.API.Application;
 using ScriptFlow.API.Infrastructure;
 using ScriptFlow.API.Infrastructure.Auth;
+using ScriptFlow.API.Infrastructure.Database;
 using Serilog;
 using Shared.Infrastructure;
 using Shared.Infrastructure.Correlation;
@@ -93,5 +95,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Temporary connectivity check: repositories still run in-memory until the stored
+// procedures exist, so this is the only thing exercising ISqlConnectionFactory for now.
+app.MapGet("/health/db", async (ISqlConnectionFactory factory, CancellationToken cancellationToken) =>
+{
+    using var connection = await factory.CreateOpenConnectionAsync(cancellationToken);
+    var result = await connection.ExecuteScalarAsync<int>("SELECT 1");
+    return Results.Ok(new { database = "ScriptFlow_DEV", connected = result == 1 });
+});
 
 app.Run();
