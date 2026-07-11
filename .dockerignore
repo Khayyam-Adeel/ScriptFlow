@@ -1,0 +1,20 @@
+# Applies to the repo-root build context used by Backend/*/Dockerfile
+
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+
+# Frontend has its own build context/.dockerignore; exclude it here too
+# so backend image builds never pull in node_modules by accident.
+Frontend/ScriptFlow-UI/node_modules/
+Frontend/ScriptFlow-UI/dist/
+Frontend/ScriptFlow-UI/.angular/
+
+.git/
+.github/
+*.md
+SPEC/
+Prompts/
+Skills/

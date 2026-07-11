@@ -12,6 +12,9 @@ obj/
 ## VS Code
 .vscode/
 
+## Claude Code (local-only overrides, not shared team config)
+.claude/settings.local.json
+
 ## Angular / Node
 node_modules/
 dist/

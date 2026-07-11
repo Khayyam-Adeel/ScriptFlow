@@ -1,0 +1,104 @@
+# Local, all-in-one orchestration for running the full ScriptFlow stack in
+# Docker. Written to be Docker-ready ahead of need: Docker Desktop isn't
+# available on our office Windows machines (IT-restricted), so this file has
+# NOT been run/verified end-to-end. Treat it as a documented starting point —
+# review images/ports/env vars against your target environment before relying
+# on it, and see ADR-004 in README.md for the reasoning.
+#
+# Usage (once Docker is available): docker compose up --build
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Your_password123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  pharmacy-gateway:
+    build:
+      context: .
+      dockerfile: Backend/PharmacyGateway.mock/Dockerfile
+    ports:
+      - "5287:8080"
+
+  scriptflow-api:
+    build:
+      context: .
+      dockerfile: Backend/ScriptFlow.API/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__ScriptFlowDb: "Server=sqlserver;Database=ScriptFlow;User Id=sa;Password=Your_password123;TrustServerCertificate=True"
+      Jwt__Issuer: "ScriptFlow"
+      Jwt__Audience: "ScriptFlow"
+      Jwt__SigningKey: "CHANGE_ME_REPLACE_WITH_A_LONG_RANDOM_SECRET"
+      Jwt__ExpiryMinutes: "60"
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: guest
+      RabbitMq__Password: guest
+      RabbitMq__ExchangeName: scriptflow.events
+      Cors__AllowedOrigins__0: "http://localhost:4200"
+    ports:
+      - "5006:8080"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+
+  dispatch-worker:
+    build:
+      context: .
+      dockerfile: Backend/Dispatch.Worker/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: guest
+      RabbitMq__Password: guest
+      RabbitMq__ExchangeName: scriptflow.events
+      PharmacyGateway__BaseUrl: "http://pharmacy-gateway:8080"
+      PharmacyGateway__TimeoutSeconds: "10"
+    depends_on:
+      - rabbitmq
+      - pharmacy-gateway
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Backend/Notification.Service/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Jwt__Issuer: "ScriptFlow"
+      Jwt__Audience: "ScriptFlow"
+      Jwt__SigningKey: "CHANGE_ME_REPLACE_WITH_A_LONG_RANDOM_SECRET"
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: guest
+      RabbitMq__Password: guest
+      RabbitMq__ExchangeName: scriptflow.events
+      Cors__AllowedOrigins__0: "http://localhost:4200"
+    ports:
+      - "5100:8080"
+    depends_on:
+      - rabbitmq
+
+  scriptflow-ui:
+    build:
+      context: ./Frontend/ScriptFlow-UI
+    ports:
+      - "4200:80"
+    depends_on:
+      - scriptflow-api
+      - notification-service
+
+volumes:
+  sqlserver-data:
