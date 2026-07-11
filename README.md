@@ -1,5 +1,7 @@
 # ScriptFlow
 
+[![CI](https://github.com/Khayyam-Adeel/ScriptFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/Khayyam-Adeel/ScriptFlow/actions/workflows/ci.yml)
+
 ScriptFlow is an electronic-prescribing platform: prescribers create and sign
 prescriptions, the system dispatches them to a (simulated) pharmacy gateway that is
 deliberately slow and unreliable, and prescribers watch the outcome update live. The
