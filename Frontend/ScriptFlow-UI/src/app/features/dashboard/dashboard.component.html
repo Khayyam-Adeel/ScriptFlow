@@ -1,0 +1,21 @@
+<h1>Dashboard</h1>
+
+<div class="quick-actions">
+  <a routerLink="/prescriptions/new" class="action-card">+ New prescription</a>
+  <a routerLink="/patients/new" class="action-card">+ New patient</a>
+  <a routerLink="/providers/new" class="action-card">+ New provider</a>
+</div>
+
+@if (loading()) {
+  <app-spinner />
+} @else {
+  <h2>Prescriptions by status</h2>
+  <div class="status-grid">
+    @for (item of statusCounts(); track item.status) {
+      <a class="status-tile" [routerLink]="['/prescriptions']" [queryParams]="{ status: item.status }">
+        <app-status-badge [status]="item.status" />
+        <span class="count">{{ item.count }}</span>
+      </a>
+    }
+  </div>
+}

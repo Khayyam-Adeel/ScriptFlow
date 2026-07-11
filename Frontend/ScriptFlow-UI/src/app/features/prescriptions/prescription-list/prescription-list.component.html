@@ -1,0 +1,39 @@
+<div class="page-header">
+  <h1>Prescriptions</h1>
+  <app-button [routerLink]="['/prescriptions/new']">+ New prescription</app-button>
+</div>
+
+<div class="filter-bar">
+  <app-select-field
+    label="Filter by status"
+    [control]="statusControl"
+    [options]="statusOptions"
+    placeholder="All statuses"
+  />
+  <span class="live-indicator" title="Refreshes automatically every 5 seconds">● Live</span>
+</div>
+
+@if (!loading() && prescriptions().length === 0) {
+  <p class="empty">No prescriptions found.</p>
+} @else {
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>SCID</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Medications</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (prescription of prescriptions(); track prescription.id) {
+        <tr [routerLink]="['/prescriptions', prescription.id]">
+          <td>{{ prescription.scid }}</td>
+          <td><app-status-badge [status]="prescription.status" /></td>
+          <td>{{ prescription.createdAtUtc | date: 'medium' }}</td>
+          <td>{{ prescription.medications.length }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

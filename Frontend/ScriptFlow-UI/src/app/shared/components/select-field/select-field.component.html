@@ -1,0 +1,12 @@
+<div class="field" [class.form-field-full]="fullWidth">
+  <label [for]="label">{{ label }}</label>
+  <select [id]="label" [formControl]="control" [class.invalid]="showError">
+    <option value="" disabled>{{ placeholder }}</option>
+    @for (option of options; track option.value) {
+      <option [value]="option.value">{{ option.label }}</option>
+    }
+  </select>
+  @if (showError) {
+    <span class="error">{{ errorMessage || 'Please make a selection.' }}</span>
+  }
+</div>

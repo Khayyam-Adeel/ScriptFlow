@@ -1,5 +1,5 @@
 using System.Text;
-using Dapper;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -7,7 +7,6 @@ using ScriptFlow.API.Api.Middleware;
 using ScriptFlow.API.Application;
 using ScriptFlow.API.Infrastructure;
 using ScriptFlow.API.Infrastructure.Auth;
-using ScriptFlow.API.Infrastructure.Database;
 using Serilog;
 using Shared.Infrastructure;
 using Shared.Infrastructure.Correlation;
@@ -19,13 +18,17 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = SerilogExtensions.CreateBaseConfiguration(builder.Configuration, "ScriptFlow.API").CreateLogger();
 builder.Host.UseSerilog();
 
-builder.Services.AddControllers();
+// Enums serialize as their name (e.g. "Signed") rather than a raw integer, so API responses
+// and Swagger docs are self-explanatory to any client, including the Angular frontend.
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
 
 // Application: MediatR commands/queries + FluentValidation + logging pipeline behaviors.
 builder.Services.AddApplication();
 
-// Infrastructure: in-memory repositories, JWT issuing, password hashing (this project's own concerns).
+// Infrastructure: SQL Server-backed repositories, JWT issuing, password hashing (this project's own concerns).
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Shared.Infrastructure: correlation ID + RabbitMQ event publisher (reused by other services later).
@@ -50,6 +53,17 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+// Lets the Angular dev server (a different origin) call this API.
+const string AngularClientCorsPolicy = "AngularClient";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(AngularClientCorsPolicy, policy =>
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -91,18 +105,11 @@ app.UseExceptionHandling();
 
 app.UseHttpsRedirection();
 
+app.UseCors(AngularClientCorsPolicy);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Temporary connectivity check: repositories still run in-memory until the stored
-// procedures exist, so this is the only thing exercising ISqlConnectionFactory for now.
-app.MapGet("/health/db", async (ISqlConnectionFactory factory, CancellationToken cancellationToken) =>
-{
-    using var connection = await factory.CreateOpenConnectionAsync(cancellationToken);
-    var result = await connection.ExecuteScalarAsync<int>("SELECT 1");
-    return Results.Ok(new { database = "ScriptFlow_DEV", connected = result == 1 });
-});
 
 app.Run();

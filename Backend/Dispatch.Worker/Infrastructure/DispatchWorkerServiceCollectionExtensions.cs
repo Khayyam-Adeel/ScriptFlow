@@ -1,6 +1,5 @@
 using Dispatch.Worker.Application.Handlers;
 using Dispatch.Worker.Application.Interfaces;
-using Dispatch.Worker.Infrastructure.Idempotency;
 using Dispatch.Worker.Infrastructure.Pharmacy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
 using Shared.Events;
+using Shared.Infrastructure.Idempotency;
 using Shared.Infrastructure.Messaging;
 
 namespace Dispatch.Worker.Infrastructure;

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Shared.contract.Contracts;
 using Shared.contract.Enums;
 using Shared.Events;
+using Shared.Infrastructure.Idempotency;
 using Shared.Infrastructure.Messaging;
 
 namespace Dispatch.Worker.Application.Handlers;

@@ -1,0 +1,13 @@
+<div class="field" [class.form-field-full]="fullWidth">
+  <label [for]="label">{{ label }}</label>
+  <input
+    [id]="label"
+    [type]="type"
+    [formControl]="control"
+    [placeholder]="placeholder"
+    [class.invalid]="showError"
+  />
+  @if (showError) {
+    <span class="error">{{ errorMessage || 'This field is required.' }}</span>
+  }
+</div>

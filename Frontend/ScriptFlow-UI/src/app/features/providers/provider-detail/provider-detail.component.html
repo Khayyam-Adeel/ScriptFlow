@@ -1,0 +1,12 @@
+@if (provider(); as provider) {
+  <h1>{{ provider.firstName }} {{ provider.lastName }}</h1>
+
+  <dl class="details">
+    <dt>Type</dt>
+    <dd>{{ provider.type }}</dd>
+    <dt>NZMC number</dt>
+    <dd>{{ provider.nzmcNo }}</dd>
+  </dl>
+} @else {
+  <app-spinner />
+}

@@ -1,0 +1,40 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+:host.status-created {
+  color: var(--status-created);
+  background: var(--status-created-bg);
+}
+
+:host.status-signed {
+  color: var(--status-signed);
+  background: var(--status-signed-bg);
+}
+
+:host.status-dispatched {
+  color: var(--status-dispatched);
+  background: var(--status-dispatched-bg);
+}
+
+:host.status-acknowledged {
+  color: var(--status-acknowledged);
+  background: var(--status-acknowledged-bg);
+}
+
+:host.status-rejected {
+  color: var(--status-rejected);
+  background: var(--status-rejected-bg);
+}
+
+:host.status-expired {
+  color: var(--status-expired);
+  background: var(--status-expired-bg);
+}

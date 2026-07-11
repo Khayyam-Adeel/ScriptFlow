@@ -1,0 +1,17 @@
+@if (patient(); as patient) {
+  <div class="page-header">
+    <h1>{{ patient.firstName }} {{ patient.lastName }}</h1>
+    <app-button [routerLink]="['/prescriptions/new']" [queryParams]="{ patientId: patient.id }">
+      + New prescription
+    </app-button>
+  </div>
+
+  <dl class="details">
+    <dt>NHI</dt>
+    <dd>{{ patient.nhi }}</dd>
+    <dt>Address</dt>
+    <dd>{{ patient.address }}</dd>
+  </dl>
+} @else {
+  <app-spinner />
+}

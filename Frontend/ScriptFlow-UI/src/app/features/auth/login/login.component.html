@@ -1,0 +1,28 @@
+<div class="auth-card">
+  <h1>ScriptFlow</h1>
+  <p class="subtitle">Sign in to manage prescriptions.</p>
+
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <app-text-field
+      label="Email"
+      type="email"
+      [control]="emailControl"
+      placeholder="you@practice.co.nz"
+      errorMessage="Enter a valid email address."
+      [fullWidth]="true"
+    />
+    <app-text-field
+      label="Password"
+      type="password"
+      [control]="passwordControl"
+      placeholder="••••••••"
+      [fullWidth]="true"
+    />
+
+    <div class="form-actions">
+      <app-button type="submit" [loading]="submitting()">Sign in</app-button>
+    </div>
+  </form>
+
+  <p class="switch">No account? <a routerLink="/register">Register</a></p>
+</div>

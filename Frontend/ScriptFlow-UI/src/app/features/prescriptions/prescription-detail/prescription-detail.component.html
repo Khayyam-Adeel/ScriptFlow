@@ -1,0 +1,66 @@
+@if (prescription(); as prescription) {
+  <div class="page-header">
+    <div>
+      <h1>{{ prescription.scid }}</h1>
+      <app-status-badge [status]="prescription.status" />
+    </div>
+    <div class="actions">
+      @if (canEdit) {
+        <app-button variant="secondary" [routerLink]="['/prescriptions', prescription.id, 'edit']">Edit</app-button>
+      }
+      @if (canSign) {
+        <app-button [loading]="actionInFlight()" (clicked)="sign()">Sign</app-button>
+      }
+      @if (canRepeat) {
+        <app-button variant="secondary" [loading]="actionInFlight()" (clicked)="repeat()">Repeat</app-button>
+      }
+    </div>
+  </div>
+
+  <dl class="details">
+    <dt>Patient</dt>
+    <dd>{{ patient() ? patient()!.firstName + ' ' + patient()!.lastName + ' · ' + patient()!.nhi : '…' }}</dd>
+    <dt>Provider</dt>
+    <dd>{{ provider() ? provider()!.firstName + ' ' + provider()!.lastName + ' (' + provider()!.type + ')' : '…' }}</dd>
+    <dt>Created</dt>
+    <dd>{{ prescription.createdAtUtc | date: 'medium' }}</dd>
+    @if (prescription.signedAtUtc) {
+      <dt>Signed</dt>
+      <dd>{{ prescription.signedAtUtc | date: 'medium' }}</dd>
+    }
+    @if (prescription.repeatOfPrescriptionId) {
+      <dt>Repeat of</dt>
+      <dd>
+        <a [routerLink]="['/prescriptions', prescription.repeatOfPrescriptionId]">{{ prescription.repeatOfPrescriptionId }}</a>
+      </dd>
+    }
+  </dl>
+
+  <h2>Medications</h2>
+  <table class="medications-table">
+    <thead>
+      <tr>
+        <th>Medicine</th>
+        <th>Take</th>
+        <th>Frequency</th>
+        <th>Duration</th>
+        <th>Quantity</th>
+        <th>Directions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (medication of prescription.medications; track medication.id) {
+        <tr>
+          <td>{{ medication.medicineName }}</td>
+          <td>{{ medication.takeValue }}</td>
+          <td>{{ medication.frequency }}</td>
+          <td>{{ medication.duration }}</td>
+          <td>{{ medication.quantity }}</td>
+          <td>{{ medication.directions }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+} @else {
+  <app-spinner />
+}

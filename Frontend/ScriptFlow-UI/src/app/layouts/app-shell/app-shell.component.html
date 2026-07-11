@@ -1,0 +1,24 @@
+<div class="shell">
+  <aside class="side-nav">
+    <div class="brand">ScriptFlow</div>
+    <nav>
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/patients" routerLinkActive="active">Patients</a>
+      <a routerLink="/providers/new" routerLinkActive="active">Providers</a>
+      <a routerLink="/prescriptions" routerLinkActive="active">Prescriptions</a>
+    </nav>
+  </aside>
+
+  <div class="main-column">
+    <header class="top-bar">
+      <span class="user-email">{{ user()?.email }}</span>
+      <button class="logout" (click)="logout()">Log out</button>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<app-toast />

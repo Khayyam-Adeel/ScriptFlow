@@ -1,0 +1,19 @@
+<h1>New provider</h1>
+
+<form class="form" [formGroup]="form" (ngSubmit)="submit()">
+  <app-text-field label="First name" [control]="firstNameControl" />
+  <app-text-field label="Last name" [control]="lastNameControl" />
+  <app-select-field label="Type" [control]="typeControl" [options]="typeOptions" />
+  <app-text-field label="NZMC number" [control]="nzmcNoControl" />
+  <app-select-field
+    label="Practice location"
+    [control]="practiceLocationControl"
+    [options]="practiceLocationOptions()"
+    placeholder="Select a practice location…"
+    [fullWidth]="true"
+  />
+
+  <div class="form-actions">
+    <app-button type="submit" [loading]="submitting()">Save provider</app-button>
+  </div>
+</form>

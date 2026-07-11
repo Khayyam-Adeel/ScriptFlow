@@ -1,0 +1,83 @@
+@if (loading()) {
+  <app-spinner />
+} @else {
+  <h1>{{ isEditMode ? 'Edit prescription' : 'New prescription' }}</h1>
+
+  <section class="patient-section">
+    <h2>Patient</h2>
+
+    @if (selectedPatient(); as patient) {
+      <div class="selected-patient">
+        <span>{{ patient.firstName }} {{ patient.lastName }} · {{ patient.nhi }}</span>
+        @if (!isEditMode) {
+          <button type="button" class="link-btn" (click)="clearSelectedPatient()">Change</button>
+        }
+      </div>
+    } @else {
+      <input
+        class="patient-search"
+        type="search"
+        [formControl]="patientQuery"
+        placeholder="Search patients by name or NHI…"
+      />
+      @if (patientResults().length > 0) {
+        <ul class="patient-results">
+          @for (patient of patientResults(); track patient.id) {
+            <li (click)="selectPatient(patient)">{{ patient.firstName }} {{ patient.lastName }} · {{ patient.nhi }}</li>
+          }
+        </ul>
+      }
+    }
+  </section>
+
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <app-select-field
+      label="Provider"
+      [control]="providerControl"
+      [options]="providerOptions()"
+      placeholder="Select a provider…"
+    />
+    <app-select-field
+      label="Practice location"
+      [control]="practiceLocationControl"
+      [options]="practiceLocationOptions()"
+      placeholder="Select a practice location…"
+    />
+
+    <div class="form-field-full">
+      <div class="medications-header">
+        <h2>Medications</h2>
+        <app-button variant="secondary" type="button" (clicked)="addMedicationLine()">+ Add medication</app-button>
+      </div>
+
+      @for (line of medications.controls; track line; let i = $index) {
+        <div class="medication-line">
+          <app-select-field
+            label="Medicine"
+            [control]="line.controls.medicineId"
+            [options]="medicineOptions()"
+            placeholder="Select a medicine…"
+            [fullWidth]="true"
+          />
+          <div class="medication-line-grid">
+            <app-text-field label="Take" [control]="line.controls.takeValue" placeholder="e.g. 1 tablet" />
+            <app-text-field label="Frequency" [control]="line.controls.frequency" placeholder="e.g. BD" />
+            <app-text-field label="Duration" [control]="line.controls.duration" placeholder="e.g. 7 days" />
+            <app-text-field label="Quantity" type="number" [control]="line.controls.quantity" />
+          </div>
+          <app-text-field label="Directions" [control]="line.controls.directions" [fullWidth]="true" />
+
+          @if (medications.length > 1) {
+            <button type="button" class="link-btn danger" (click)="removeMedicationLine(i)">Remove medication</button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="form-actions">
+      <app-button type="submit" [loading]="submitting()">
+        {{ isEditMode ? 'Save changes' : 'Create prescription' }}
+      </app-button>
+    </div>
+  </form>
+}

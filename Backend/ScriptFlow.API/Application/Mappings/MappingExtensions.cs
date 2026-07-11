@@ -11,6 +11,15 @@ public static class MappingExtensions
     public static ProviderDto ToDto(this Provider provider) =>
         new(provider.Id, provider.FirstName, provider.LastName, provider.Type, provider.NzmcNo, provider.PracticeLocationId);
 
+    public static MedicineDto ToDto(this Medicine medicine) =>
+        new(medicine.Id, medicine.Name, medicine.Sctid, medicine.Form);
+
+    public static PracticeDto ToDto(this Practice practice) =>
+        new(practice.Id, practice.Name);
+
+    public static PracticeLocationDto ToDto(this PracticeLocation location) =>
+        new(location.Id, location.PracticeId, location.Name, location.HpiNumber.Value);
+
     public static MedicationDto ToDto(this PrescriptionMedication medication, IReadOnlyDictionary<Guid, Medicine> medicinesById)
     {
         var medicineName = medicinesById.TryGetValue(medication.MedicineId, out var medicine) ? medicine.Name : "Unknown";

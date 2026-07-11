@@ -1,0 +1,36 @@
+<div class="page-header">
+  <h1>Patients</h1>
+  <app-button [routerLink]="['/patients/new']">+ New patient</app-button>
+</div>
+
+<input
+  class="search-input"
+  type="search"
+  [formControl]="queryControl"
+  placeholder="Search by name or NHI…"
+/>
+
+@if (loading()) {
+  <app-spinner />
+} @else if (searched() && results().length === 0) {
+  <p class="empty">No patients match "{{ queryControl.value }}".</p>
+} @else if (results().length > 0) {
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>NHI</th>
+        <th>Address</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (patient of results(); track patient.id) {
+        <tr [routerLink]="['/patients', patient.id]">
+          <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+          <td>{{ patient.nhi }}</td>
+          <td>{{ patient.address }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

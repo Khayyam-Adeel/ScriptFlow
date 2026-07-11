@@ -31,4 +31,12 @@ public sealed class ProvidersController : ControllerBase
         var result = await _mediator.Send(new GetProviderByIdQuery(id), cancellationToken);
         return Ok(result);
     }
+
+    /// <summary>Lists providers for the provider picker on the prescription form, optionally scoped to one practice location.</summary>
+    [HttpGet]
+    public async Task<IActionResult> List([FromQuery] Guid? practiceLocationId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new ListProvidersQuery(practiceLocationId), cancellationToken);
+        return Ok(result);
+    }
 }

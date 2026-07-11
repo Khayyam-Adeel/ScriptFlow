@@ -34,22 +34,56 @@ public sealed class Prescription
         Guid practiceLocationId,
         IEnumerable<PrescriptionMedication> medications,
         Guid? repeatOfPrescriptionId = null)
+        : this(
+            id, scid, patientId, providerId, practiceLocationId, repeatOfPrescriptionId,
+            PrescriptionStatus.Created, DateTime.UtcNow, signedAtUtc: null, RequireNonEmpty(medications))
     {
-        var medicationList = medications?.ToList() ?? new List<PrescriptionMedication>();
-        if (medicationList.Count == 0)
-        {
-            throw new DomainException("A prescription must have at least one medication.");
-        }
+    }
 
+    /// <summary>
+    /// Rehydrates a Prescription from persisted state (real Status/CreatedAtUtc/SignedAtUtc),
+    /// bypassing the "new prescription" defaults the public constructor applies. Only
+    /// SQL-backed repositories (same assembly) reading rows back from the database should call
+    /// this - Application-layer code creating a genuinely new prescription must use the public
+    /// constructor instead.
+    /// </summary>
+    internal static Prescription Rehydrate(
+        Guid id,
+        Scid scid,
+        Guid patientId,
+        Guid providerId,
+        Guid practiceLocationId,
+        Guid? repeatOfPrescriptionId,
+        PrescriptionStatus status,
+        DateTime createdAtUtc,
+        DateTime? signedAtUtc,
+        IEnumerable<PrescriptionMedication> medications)
+        => new(
+            id, scid, patientId, providerId, practiceLocationId, repeatOfPrescriptionId,
+            status, createdAtUtc, signedAtUtc, medications.ToList());
+
+    private Prescription(
+        Guid id,
+        Scid scid,
+        Guid patientId,
+        Guid providerId,
+        Guid practiceLocationId,
+        Guid? repeatOfPrescriptionId,
+        PrescriptionStatus status,
+        DateTime createdAtUtc,
+        DateTime? signedAtUtc,
+        List<PrescriptionMedication> medications)
+    {
         Id = id;
         Scid = scid ?? throw new ArgumentNullException(nameof(scid));
         PatientId = patientId;
         ProviderId = providerId;
         PracticeLocationId = practiceLocationId;
         RepeatOfPrescriptionId = repeatOfPrescriptionId;
-        Status = PrescriptionStatus.Created;
-        CreatedAtUtc = DateTime.UtcNow;
-        _medications.AddRange(medicationList);
+        Status = status;
+        CreatedAtUtc = createdAtUtc;
+        SignedAtUtc = signedAtUtc;
+        _medications.AddRange(medications);
     }
 
     public void UpdateMedications(IEnumerable<PrescriptionMedication> medications)
@@ -74,6 +108,20 @@ public sealed class Prescription
         SignedAtUtc = DateTime.UtcNow;
     }
 
+    public void Acknowledge()
+    {
+        EnsureStatus(PrescriptionStatus.Signed, "acknowledge");
+
+        Status = PrescriptionStatus.Acknowledged;
+    }
+
+    public void Reject()
+    {
+        EnsureStatus(PrescriptionStatus.Signed, "reject");
+
+        Status = PrescriptionStatus.Rejected;
+    }
+
     public Prescription Repeat(Guid newId, Scid newScid)
     {
         if (Status is not (PrescriptionStatus.Signed or PrescriptionStatus.Dispatched or PrescriptionStatus.Acknowledged))
@@ -95,5 +143,16 @@ public sealed class Prescription
             throw new InvalidPrescriptionStateException(
                 $"Cannot {action} a prescription in {Status} status; it must be {required}.");
         }
+    }
+
+    private static List<PrescriptionMedication> RequireNonEmpty(IEnumerable<PrescriptionMedication> medications)
+    {
+        var medicationList = medications?.ToList() ?? new List<PrescriptionMedication>();
+        if (medicationList.Count == 0)
+        {
+            throw new DomainException("A prescription must have at least one medication.");
+        }
+
+        return medicationList;
     }
 }
