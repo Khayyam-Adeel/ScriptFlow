@@ -313,3 +313,10 @@ in this repo — `docker-compose.yml` carries a comment flagging this, and anyon
 picking it up on a Docker-enabled machine should treat first run as a validation
 pass (build errors, port conflicts, and connection-string/env-var mismatches are
 the most likely issues), not an already-proven deployment path.
+
+## 7. Security
+
+See [`SECURITY.md`](SECURITY.md) for the security baseline (authentication,
+authorization, input validation, parameterized data access, secrets handling) and a
+short OWASP Top 10 (2021) self-assessment, written against the actual code with file
+references — including the gaps that are still open.

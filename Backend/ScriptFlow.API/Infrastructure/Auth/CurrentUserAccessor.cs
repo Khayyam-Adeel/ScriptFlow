@@ -42,4 +42,38 @@ public sealed class CurrentUserAccessor : ICurrentUserAccessor
             return claim is not null && Guid.TryParse(claim.Value, out var userId) ? userId : null;
         }
     }
+
+    public string CurrentJti
+    {
+        get
+        {
+            var user = _httpContextAccessor.HttpContext?.User
+                ?? throw new InvalidOperationException("No authenticated user is available on the current request.");
+
+            var claim = user.FindFirst(JwtRegisteredClaimNames.Jti);
+            if (claim is null || string.IsNullOrWhiteSpace(claim.Value))
+            {
+                throw new InvalidOperationException("The authenticated user's jti claim is missing.");
+            }
+
+            return claim.Value;
+        }
+    }
+
+    public DateTime CurrentTokenExpiresAtUtc
+    {
+        get
+        {
+            var user = _httpContextAccessor.HttpContext?.User
+                ?? throw new InvalidOperationException("No authenticated user is available on the current request.");
+
+            var claim = user.FindFirst(JwtRegisteredClaimNames.Exp);
+            if (claim is null || !long.TryParse(claim.Value, out var expSeconds))
+            {
+                throw new InvalidOperationException("The authenticated user's exp claim is missing or invalid.");
+            }
+
+            return DateTimeOffset.FromUnixTimeSeconds(expSeconds).UtcDateTime;
+        }
+    }
 }

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Infrastructure.Auth;
 using Shared.Infrastructure.Correlation;
 using Shared.Infrastructure.Messaging;
 
@@ -13,6 +14,8 @@ public static class ServiceCollectionExtensions
 
         services.Configure<Messaging.RabbitMqOptions>(configuration.GetSection(Messaging.RabbitMqOptions.SectionName));
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+
+        services.AddSingleton<IRevokedTokenStore, InMemoryRevokedTokenStore>();
 
         return services;
     }

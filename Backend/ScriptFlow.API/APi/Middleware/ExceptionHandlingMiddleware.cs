@@ -49,9 +49,13 @@ public sealed class ExceptionHandlingMiddleware
             _logger.LogError(exception, "Unhandled exception");
         }
 
-        var detail = exception is ValidationException validationException
-            ? string.Join("; ", validationException.Errors.Select(e => e.ErrorMessage))
-            : exception.Message;
+        // Never forward the raw exception message for an unhandled/unexpected failure - it can
+        // contain internal details (SQL errors, file paths). Logged above for diagnosis instead.
+        var detail = statusCode == HttpStatusCode.InternalServerError
+            ? title
+            : exception is ValidationException validationException
+                ? string.Join("; ", validationException.Errors.Select(e => e.ErrorMessage))
+                : exception.Message;
 
         var problem = new
         {

@@ -12,4 +12,13 @@ public interface ICurrentUserAccessor
     /// updating a prescription's status in response to a pharmacy outcome, not a user action.
     /// UpdatedBy is nullable in the schema specifically to allow these system-driven writes.</summary>
     Guid? UserIdOrNull { get; }
+
+    /// <summary>The "jti" claim of the token used on the current request, for recording a logout
+    /// against IRevokedTokenStore. Only valid to read while handling an authenticated request.</summary>
+    string CurrentJti { get; }
+
+    /// <summary>The "exp" claim of the token used on the current request, converted to UTC - the
+    /// point after which a revocation record for it is no longer needed (see
+    /// InMemoryRevokedTokenStore's self-cleaning behavior).</summary>
+    DateTime CurrentTokenExpiresAtUtc { get; }
 }

@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ScriptFlow.API.Api.Middleware;
@@ -9,6 +11,7 @@ using ScriptFlow.API.Infrastructure;
 using ScriptFlow.API.Infrastructure.Auth;
 using Serilog;
 using Shared.Infrastructure;
+using Shared.Infrastructure.Auth;
 using Shared.Infrastructure.Correlation;
 using Shared.Infrastructure.Logging;
 
@@ -50,9 +53,42 @@ builder.Services
             ValidAudience = jwtOptions.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey))
         };
+
+        // Closes the "stolen token stays valid until it expires" gap: logout (AuthController)
+        // records the token's jti in IRevokedTokenStore, and every subsequent request - here and
+        // in Notification.Service, which shares the same store type via a RabbitMQ-carried
+        // TokenRevokedEvent - rejects it even though it's still within its natural expiry.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var jti = context.Principal?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti)?.Value;
+                var revokedTokens = context.HttpContext.RequestServices.GetRequiredService<IRevokedTokenStore>();
+                if (!string.IsNullOrEmpty(jti) && await revokedTokens.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
+                {
+                    context.Fail("Token has been revoked.");
+                }
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
+
+// Login/register throttling: 5 requests/minute per client IP, rejected immediately (no queueing -
+// queuing a login flood just delays the same attacker instead of stopping them). Partitioned by
+// remote IP so one client's attempts can't exhaust a budget shared by every other caller.
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("auth", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 // Lets the Angular dev server (a different origin) call this API.
 const string AngularClientCorsPolicy = "AngularClient";
@@ -109,6 +145,7 @@ app.UseCors(AngularClientCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
 

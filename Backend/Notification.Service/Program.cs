@@ -7,6 +7,7 @@ using Notification.Service.Hubs;
 using Serilog;
 using Shared.Events;
 using Shared.Infrastructure;
+using Shared.Infrastructure.Auth;
 using Shared.Infrastructure.Logging;
 using Shared.Infrastructure.Messaging;
 
@@ -56,6 +57,18 @@ builder.Services
                 }
 
                 return Task.CompletedTask;
+            },
+
+            // Same revocation check as ScriptFlow.API, backed by the same store type - kept in
+            // sync across processes via TokenRevokedEvent (see TokenRevokedEventHandler below).
+            OnTokenValidated = async context =>
+            {
+                var jti = context.Principal?.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Jti)?.Value;
+                var revokedTokens = context.HttpContext.RequestServices.GetRequiredService<IRevokedTokenStore>();
+                if (!string.IsNullOrEmpty(jti) && await revokedTokens.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
+                {
+                    context.Fail("Token has been revoked.");
+                }
             }
         };
     });
@@ -85,6 +98,17 @@ builder.Services.AddRabbitMqConsumer<PrescriptionStatusChangedEvent>(new RabbitM
 builder.Services.AddHostedService(provider => new EventConsumerBackgroundService<PrescriptionStatusChangedEvent>(
     provider.GetRequiredService<IEventConsumer<PrescriptionStatusChangedEvent>>(),
     provider.GetRequiredService<PrescriptionStatusChangedEventHandler>().HandleAsync));
+
+builder.Services.AddSingleton<TokenRevokedEventHandler>();
+builder.Services.AddRabbitMqConsumer<TokenRevokedEvent>(new RabbitMqConsumerSettings
+{
+    QueueName = "notification.token-revoked",
+    RoutingKey = nameof(TokenRevokedEvent),
+    DeadLetterQueueName = "notification.token-revoked.dlq"
+});
+builder.Services.AddHostedService(provider => new EventConsumerBackgroundService<TokenRevokedEvent>(
+    provider.GetRequiredService<IEventConsumer<TokenRevokedEvent>>(),
+    provider.GetRequiredService<TokenRevokedEventHandler>().HandleAsync));
 
 var app = builder.Build();
 
