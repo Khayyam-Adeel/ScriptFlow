@@ -320,3 +320,11 @@ See [`SECURITY.md`](SECURITY.md) for the security baseline (authentication,
 authorization, input validation, parameterized data access, secrets handling) and a
 short OWASP Top 10 (2021) self-assessment, written against the actual code with file
 references — including the gaps that are still open.
+
+## 8. Performance
+
+See [`PERFORMANCE.md`](PERFORMANCE.md) for the performance chapter: a 1,050,000-row
+prescription seed in the real local SQL Server instance, three reporting queries, and
+measured (not estimated) before/after execution plans and `STATISTICS IO/TIME` for
+each — including one index that was added but honestly reported as **not** improving
+its target query, with the measured reason why.

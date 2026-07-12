@@ -16,6 +16,16 @@ TestResults/
 ## Claude Code (local-only overrides, not shared team config)
 .claude/settings.local.json
 
+## OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.log
+
+## Stray local screenshots/debug captures - not documentation, shouldn't be committed
+image.png
+*.received.png
+
 ## Angular / Node
 node_modules/
 dist/
