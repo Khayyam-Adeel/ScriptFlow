@@ -28,7 +28,17 @@ until run_sql -Q "SELECT 1" >/dev/null 2>&1; do
 done
 
 echo "Checking whether ScriptFlow database is already bootstrapped..."
-ALREADY_DONE=$(run_sql -h -1 -Q "SET NOCOUNT ON; IF DB_ID('ScriptFlow') IS NOT NULL AND EXISTS (SELECT 1 FROM ScriptFlow.Profile.tblUsers) SELECT 1 ELSE SELECT 0" | tr -d '[:space:]')
+# Two separate queries, deliberately: referencing ScriptFlow.Profile.tblUsers in a single query
+# fails to even PARSE when the ScriptFlow database doesn't exist yet (a truly fresh server) -
+# SQL Server resolves three-part names at compile time, before the IF's short-circuit ever runs
+# at runtime. So check DB_ID() first (safe against master, no dependency on ScriptFlow existing),
+# and only reference Profile.tblUsers in a second query once already connected inside that DB.
+DB_EXISTS=$(run_sql -h -1 -Q "SET NOCOUNT ON; SELECT CASE WHEN DB_ID('ScriptFlow') IS NOT NULL THEN 1 ELSE 0 END" | tr -d '[:space:]')
+
+ALREADY_DONE=0
+if [ "$DB_EXISTS" = "1" ]; then
+    ALREADY_DONE=$(run_sql -d ScriptFlow -h -1 -Q "SET NOCOUNT ON; IF EXISTS (SELECT 1 FROM Profile.tblUsers) SELECT 1 ELSE SELECT 0" | tr -d '[:space:]')
+fi
 
 if [ "$ALREADY_DONE" = "1" ]; then
     echo "ScriptFlow database already bootstrapped (persisted volume) - skipping."
