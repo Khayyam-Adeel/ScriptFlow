@@ -6,6 +6,7 @@ import { PrescriptionStatus } from '../../shared/models/prescription-status';
 import {
   CreatePrescriptionRequest,
   Prescription,
+  PrescriptionStatusCount,
   UpdatePrescriptionRequest,
 } from '../models/prescription.model';
 
@@ -45,5 +46,11 @@ export class PrescriptionService {
     }
 
     return this.http.get<Prescription[]>(this.baseUrl, { params });
+  }
+
+  /** Counts across every prescription, not just a page of them - what the dashboard's status
+   * tiles need. `list()` is capped to the 200 most recent matches, so it would undercount. */
+  getStatusCounts(): Observable<PrescriptionStatusCount[]> {
+    return this.http.get<PrescriptionStatusCount[]>(`${this.baseUrl}/status-counts`);
   }
 }

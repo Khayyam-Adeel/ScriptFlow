@@ -48,3 +48,9 @@ export interface CreatePrescriptionRequest {
 export interface UpdatePrescriptionRequest {
   medications: MedicationLine[];
 }
+
+// Mirrors ScriptFlow.API.Application.DTOs.PrescriptionStatusCountDto
+export interface PrescriptionStatusCount {
+  status: PrescriptionStatus;
+  count: number;
+}

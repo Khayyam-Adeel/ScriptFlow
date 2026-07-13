@@ -1,5 +1,6 @@
 using System.Data;
 using Dapper;
+using ScriptFlow.API.Application.DTOs;
 using ScriptFlow.API.Application.Interfaces;
 using ScriptFlow.API.Domain.Entities;
 using ScriptFlow.API.Domain.ValueObjects;
@@ -103,6 +104,23 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
             .ToList();
     }
 
+    public async Task<IReadOnlyCollection<PrescriptionStatusCountDto>> GetStatusCountsAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var rows = await connection.QueryAsync<StatusCountRow>(new CommandDefinition(
+            "Prescription.usp_Prescription_StatusCounts",
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken));
+
+        var countsByStatus = rows.ToDictionary(r => (PrescriptionStatus)r.Status, r => r.Cnt);
+
+        // Every status gets a tile even at zero, so the dashboard doesn't have to guess which
+        // statuses exist - simpler than making the frontend fill in the gaps.
+        return Enum.GetValues<PrescriptionStatus>()
+            .Select(status => new PrescriptionStatusCountDto(status, countsByStatus.GetValueOrDefault(status)))
+            .ToList();
+    }
+
     private static Prescription ToEntity(PrescriptionHeaderRow header, IEnumerable<PrescriptionMedicationRow> medicationRows)
     {
         var medications = medicationRows.Select(m =>
@@ -152,4 +170,6 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
     private sealed record PrescriptionMedicationListRow(
         Guid Id, Guid MedicineId, string TakeValue, string Frequency, string Duration, int Quantity, string Directions,
         Guid PrescriptionId);
+
+    private sealed record StatusCountRow(byte Status, int Cnt);
 }

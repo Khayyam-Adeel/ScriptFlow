@@ -57,6 +57,16 @@ public sealed class PrescriptionsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>For the dashboard's status tiles - counts across every prescription, not a page
+    /// of them (unlike List, which is capped). "status-counts" is a fixed literal, so it never
+    /// collides with GetById's {id:guid} route.</summary>
+    [HttpGet("status-counts")]
+    public async Task<IActionResult> GetStatusCounts(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetPrescriptionStatusCountsQuery(), cancellationToken);
+        return Ok(result);
+    }
+
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] Guid? patientId, [FromQuery] PrescriptionStatus? status, CancellationToken cancellationToken)

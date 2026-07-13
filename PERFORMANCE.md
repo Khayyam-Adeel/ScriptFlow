@@ -117,6 +117,33 @@ narrowing the seed's date range (so "still open after 90 days" is genuinely rare
 in production, would reflect however patients/providers are actually distributed over
 time.
 
+## A real consequence of the 1M-row seed: it broke the dashboard
+
+Seeding `Prescription.tblPrescriptions` to 1,050,000 rows didn't just create material
+for reporting queries — it exposed a real, pre-existing bug the moment the app was
+run against it live. The Angular dashboard called `GET /api/prescriptions` with no
+filters and counted statuses client-side; `usp_Prescription_List` had no `TOP`/paging,
+so an unfiltered call tried to return the entire table. Confirmed live: the request
+didn't complete even after 15 seconds — before the seed, with a handful of rows, this
+same code path was instant and the bug was invisible.
+
+Fixed two ways, not one:
+1. **`usp_Prescription_List` is now capped** at the 200 most recent matches regardless
+   of filter (~2.2s for an unfiltered call afterward, down from never completing).
+2. **A dedicated `usp_Prescription_StatusCounts`** (`GROUP BY Status`, ~1s regardless
+   of table size) backs a new `GET /api/prescriptions/status-counts` endpoint, which
+   the dashboard now calls instead. This isn't just a performance fix — capping
+   `usp_Prescription_List` alone would have made the dashboard *fast but wrong*: with
+   1.05M total rows, counting only the 200 most recent would show a small fraction of
+   the real totals per status.
+
+Verified live end-to-end: `status-counts` returns the real totals
+(`Acknowledged: 662,759`, `Rejected: 209,045`, etc.) in ~3s; the capped list returns in
+~2.4s. Same lesson as the filtered-index finding above — code that's correct against a
+small demo dataset can break, silently or loudly, once the data is realistic scale;
+the fix belongs wherever the actual need is (aggregate counts vs. a bounded list), not
+just a bigger timeout.
+
 **Correction — this index was not harmless.** Adding *any* filtered index to a table
 requires `QUOTED_IDENTIFIER ON` for every session that subsequently writes to that
 table (`INSERT`/`UPDATE`/`DELETE`) — not just for the `CREATE INDEX` statement itself.
