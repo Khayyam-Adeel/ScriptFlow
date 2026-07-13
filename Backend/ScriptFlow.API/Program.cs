@@ -150,3 +150,8 @@ app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();
+
+// Exposes the otherwise-internal top-level-statement Program class to
+// ScriptFlow.API.Tests, so WebApplicationFactory<Program> can boot this app in-process
+// for integration tests - the standard ASP.NET Core pattern for this.
+public partial class Program { }

@@ -108,5 +108,46 @@ reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" -targetdir:TestR
 (`reportgenerator` requires a one-off `dotnet tool install -g dotnet-reportgenerator-globaltool`.)
 
 Next steps for the broader "automated tests" requirement (not done here): Application-layer
-tests (handlers/validators) and at least one integration test of the primary
-create -> sign -> dispatch -> acknowledge workflow.
+tests (handlers/validators).
+
+## Integration test (added later)
+
+`Backend/ScriptFlow.API.Tests/Integration/PrimaryWorkflowIntegrationTests.cs` covers
+the primary workflow end-to-end through the real ASP.NET Core pipeline: register ->
+create provider/patient -> create prescription -> sign it, asserting both the HTTP
+response (`Status = Signed`) and that `PrescriptionSignedEvent` actually arrives on a
+real RabbitMQ queue bound to the real `scriptflow.events` exchange.
+
+**Deliberately hits real infrastructure** (the local SQL Server `dbserver-local`/
+`ScriptFlow_DEV` and RabbitMQ), not Testcontainers or in-memory fakes: the actual
+stored procedures are gitignored by design ("database-side artifacts, not part of the
+source tree"), so there's nothing for a hermetic container to run against, and
+duplicating the procs inside the test project would just drift from the real ones.
+
+- `ScriptFlowApiFactory` - a `WebApplicationFactory<Program>` pinned to `Development`
+  (loads the real `appsettings.Development.json` config, same as `dotnet run`).
+  `Program.cs` has a `public partial class Program { }` marker added for this (the
+  standard ASP.NET Core pattern for making the implicit top-level-statement Program
+  class accessible to a test assembly).
+- `[SkippableFact]` (via the `Xunit.SkippableFact` package) probes `ISqlConnectionFactory`
+  and a RabbitMQ connection before running; if either is unreachable, the test result
+  is **Skipped** (not Failed, not a false Passed) - this is what happens in CI, since
+  GitHub Actions has no SQL Server/RabbitMQ configured. Verified both directions:
+  passes for real locally (`Passed: 128, Skipped: 0`), and skips cleanly when pointed
+  at an unreachable host (`Passed: 127, Skipped: 1`, override via
+  `RabbitMq__HostName`/`ConnectionStrings__ScriptFlowDb` env vars).
+
+**Bug found and fixed by writing this test:** the first real run failed with a 500 -
+`INSERT failed because the following SET options have incorrect settings:
+'QUOTED_IDENTIFIER'`. Root cause: the performance chapter's
+`IX_Prescriptions_Acknowledged_SignedAtUtc` filtered index (see `PERFORMANCE.md`)
+requires `QUOTED_IDENTIFIER ON` for any session that writes to
+`Prescription.tblPrescriptions` - but `usp_Prescription_Create` and
+`usp_Prescription_Update` were both compiled with it `OFF` (`sys.sql_modules
+.uses_quoted_identifier = 0`), so every prescription create/sign call was silently
+broken from the moment that index was added. Fixed by recompiling both procedures
+with `SET QUOTED_IDENTIFIER ON` in effect (also had to swap their `CREATE OR ALTER
+PROCEDURE` syntax for `DROP`+`CREATE PROCEDURE` - this SQL Server instance is
+2014, which predates `CREATE OR ALTER`, first introduced in 2016 SP1). This is
+exactly the kind of regression an integration test is supposed to catch, caught on
+the very first real run.

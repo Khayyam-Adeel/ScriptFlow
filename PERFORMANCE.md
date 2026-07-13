@@ -108,11 +108,25 @@ assumption wrong: with 24 months of seeded data and only a 90-day cutoff,
 genuinely cheaper than a nonclustered seek/scan plus bookmark lookups — SQL Server's
 optimizer correctly ignored the new index in every capture, including a retest with
 the cutoff date pre-computed into a variable (to rule out a non-sargable-expression
-cardinality-estimate artifact as the cause). The index still exists (harmless,
-unused) and is documented here rather than silently dropped or the result quietly
-omitted: **the lesson is that index design has to be checked against actual predicate
-selectivity, not assumed from the query's English description** — "prescriptions
-signed long ago" sounds selective; against this particular seed's date distribution,
-it isn't. A real fix would be narrowing the seed's date range (so "still open after
-90 days" is genuinely rare) or, in production, would reflect however patients/
-providers are actually distributed over time.
+cardinality-estimate artifact as the cause). The index still exists and is documented
+here rather than silently dropped or the result quietly omitted: **the lesson is that
+index design has to be checked against actual predicate selectivity, not assumed from
+the query's English description** — "prescriptions signed long ago" sounds selective;
+against this particular seed's date distribution, it isn't. A real fix would be
+narrowing the seed's date range (so "still open after 90 days" is genuinely rare) or,
+in production, would reflect however patients/providers are actually distributed over
+time.
+
+**Correction — this index was not harmless.** Adding *any* filtered index to a table
+requires `QUOTED_IDENTIFIER ON` for every session that subsequently writes to that
+table (`INSERT`/`UPDATE`/`DELETE`) — not just for the `CREATE INDEX` statement itself.
+`usp_Prescription_Create` and `usp_Prescription_Update` were both compiled with
+`QUOTED_IDENTIFIER OFF` (`sys.sql_modules.uses_quoted_identifier = 0`), so from the
+moment `IX_Prescriptions_Acknowledged_SignedAtUtc` was added, **every prescription
+create and sign call started failing with a 500** — a real regression, not a
+theoretical one. This was caught the first time the integration test
+(`TEST_PLAN.md`) actually exercised create→sign end-to-end, and fixed by recompiling
+both procedures with `QUOTED_IDENTIFIER ON`. Left in `PERFORMANCE.md`'s original
+wording above (struck through the "harmless" claim rather than deleted) because
+getting this wrong the first time, then catching it for real, is itself the more
+honest record than editing history to look right in hindsight.
