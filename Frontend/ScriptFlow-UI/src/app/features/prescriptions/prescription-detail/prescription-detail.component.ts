@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
+import { filter, finalize, forkJoin } from 'rxjs';
+import { PrescriptionHubService } from '../../../core/services/prescription-hub.service';
 import { PrescriptionService } from '../../../core/services/prescription.service';
 import { PatientService } from '../../../core/services/patient.service';
 import { ProviderService } from '../../../core/services/provider.service';
@@ -9,6 +11,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { Prescription } from '../../../core/models/prescription.model';
 import { Patient } from '../../../core/models/patient.model';
 import { Provider } from '../../../core/models/provider.model';
+import { statusToastKind } from '../../../shared/models/prescription-status';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SpinnerComponent } from '../../../shared/components/spinner/spinner.component';
@@ -29,6 +32,8 @@ export class PrescriptionDetailComponent {
   private readonly patientService = inject(PatientService);
   private readonly providerService = inject(ProviderService);
   private readonly notifications = inject(NotificationService);
+  private readonly prescriptionHub = inject(PrescriptionHubService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -54,6 +59,19 @@ export class PrescriptionDetailComponent {
 
   constructor() {
     this.load();
+
+    this.prescriptionHub.statusChanged$
+      .pipe(
+        filter(({ prescriptionId }) => prescriptionId === this.prescriptionId),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ status }) => {
+        const current = this.prescription();
+        if (current) {
+          this.prescription.set({ ...current, status });
+        }
+        this.notifications.show(`Status updated: ${status}`, statusToastKind(status));
+      });
   }
 
   private load(): void {

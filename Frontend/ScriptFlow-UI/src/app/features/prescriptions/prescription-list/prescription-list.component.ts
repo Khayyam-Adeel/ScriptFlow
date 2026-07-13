@@ -2,11 +2,12 @@ import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subject, startWith, switchMap, takeUntil, timer } from 'rxjs';
+import { EMPTY, Subject, catchError, exhaustMap, startWith, switchMap, takeUntil, timer } from 'rxjs';
 import { PrescriptionHubService } from '../../../core/services/prescription-hub.service';
 import { PrescriptionService } from '../../../core/services/prescription.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Prescription } from '../../../core/models/prescription.model';
-import { PRESCRIPTION_STATUSES, PrescriptionStatus } from '../../../shared/models/prescription-status';
+import { PRESCRIPTION_STATUSES, PrescriptionStatus, statusToastKind } from '../../../shared/models/prescription-status';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SelectFieldComponent, SelectOption } from '../../../shared/components/select-field/select-field.component';
@@ -30,6 +31,7 @@ const POLL_INTERVAL_MS = 5000;
 export class PrescriptionListComponent implements OnDestroy {
   private readonly prescriptionService = inject(PrescriptionService);
   private readonly prescriptionHub = inject(PrescriptionHubService);
+  private readonly notifications = inject(NotificationService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyed$ = new Subject<void>();
   private readonly restart$ = new Subject<void>();
@@ -58,27 +60,43 @@ export class PrescriptionListComponent implements OnDestroy {
       .pipe(
         startWith(undefined),
         switchMap(() => timer(0, POLL_INTERVAL_MS)),
-        switchMap(() => {
+        // exhaustMap, not switchMap: a slow query (this table holds 1M+ rows) can easily take
+        // longer than the 5s poll interval. switchMap would cancel that in-flight request the
+        // moment the next tick fires - forever, if the query is consistently slower than the
+        // poll - so the list would never render. exhaustMap instead ignores ticks that land
+        // while a request is still pending, letting the current one actually finish.
+        exhaustMap(() => {
           if (document.visibilityState === 'hidden') {
-            return [];
+            return EMPTY;
           }
           const status = this.statusControl.value || undefined;
-          return this.prescriptionService.list(undefined, status);
+          return this.prescriptionService.list(undefined, status).pipe(
+            // A failed poll tick (401, a slow query timing out, a backend blip) must not kill
+            // this subscription - an error here is terminal for the whole chain otherwise,
+            // silently ending every future poll tick and any reaction to the status filter
+            // until the page is reloaded. Swallow it; the next 5s tick retries on its own.
+            catchError(() => {
+              this.loading.set(false);
+              return EMPTY;
+            }),
+          );
         }),
         takeUntil(this.destroyed$),
       )
-      .subscribe({
-        next: (prescriptions) => {
-          this.prescriptions.set(prescriptions);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
+      .subscribe((prescriptions) => {
+        this.prescriptions.set(prescriptions);
+        this.loading.set(false);
       });
 
     this.prescriptionHub.statusChanged$.pipe(takeUntil(this.destroyed$)).subscribe(({ prescriptionId, status }) => {
+      const matched = this.prescriptions().find((p) => p.id === prescriptionId);
+      if (!matched) {
+        return;
+      }
       this.prescriptions.update((list) =>
         list.map((p) => (p.id === prescriptionId ? { ...p, status } : p)),
       );
+      this.notifications.show(`${matched.scid}: ${status}`, statusToastKind(status));
     });
   }
 

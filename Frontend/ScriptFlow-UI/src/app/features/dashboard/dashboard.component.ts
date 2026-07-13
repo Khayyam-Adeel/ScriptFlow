@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { Subject, debounceTime, startWith, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, debounceTime, exhaustMap, startWith } from 'rxjs';
 import { PrescriptionHubService } from '../../core/services/prescription-hub.service';
 import { PrescriptionService } from '../../core/services/prescription.service';
 import { PrescriptionStatusCount } from '../../core/models/prescription.model';
@@ -38,7 +38,22 @@ export class DashboardComponent {
       .pipe(
         startWith(undefined),
         debounceTime(300),
-        switchMap(() => this.prescriptionService.getStatusCounts()),
+        // exhaustMap, not switchMap: this GROUP BY runs over 1M+ rows and can take longer than
+        // the 300ms debounce window, so a burst of SignalR pushes could otherwise cancel the
+        // in-flight fetch over and over via switchMap and it would never complete. exhaustMap
+        // ignores pushes that land while a fetch is still pending instead of cancelling it.
+        exhaustMap(() =>
+          this.prescriptionService.getStatusCounts().pipe(
+            // A failed fetch (401, a slow query timing out, a backend blip) must not kill this
+            // subscription - an error here is terminal for the whole chain otherwise, silently
+            // ending all future refreshes (including ones triggered by the SignalR push below)
+            // until the page is reloaded. Swallow it and keep the last known-good counts.
+            catchError(() => {
+              this.loading.set(false);
+              return EMPTY;
+            }),
+          ),
+        ),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((counts) => {
