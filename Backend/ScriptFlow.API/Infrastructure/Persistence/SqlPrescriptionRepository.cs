@@ -145,6 +145,28 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
             .ToList();
     }
 
+    public async Task<IReadOnlyCollection<Prescription>> GetStaleForExpiryAsync(
+        DateTime olderThanUtc, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        using var results = await connection.QueryMultipleAsync(new CommandDefinition(
+            "Prescription.usp_Prescription_ListStaleForExpiry",
+            new { OlderThanUtc = olderThanUtc },
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken));
+
+        var headers = (await results.ReadAsync<PrescriptionHeaderRow>()).ToList();
+        var medicationsByPrescriptionId = (await results.ReadAsync<PrescriptionMedicationListRow>())
+            .ToLookup(m => m.PrescriptionId);
+
+        return headers
+            .Select(header => ToEntity(
+                header,
+                medicationsByPrescriptionId[header.Id].Select(m => new PrescriptionMedicationRow(
+                    m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions))))
+            .ToList();
+    }
+
     private static Prescription ToEntity(PrescriptionHeaderRow header, IEnumerable<PrescriptionMedicationRow> medicationRows)
     {
         var medications = medicationRows.Select(m =>

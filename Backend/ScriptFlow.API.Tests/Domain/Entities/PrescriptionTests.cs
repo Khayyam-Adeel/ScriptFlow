@@ -108,10 +108,40 @@ public class PrescriptionTests
     }
 
     [Fact]
-    public void Acknowledge_WhileSigned_TransitionsToAcknowledged()
+    public void Dispatch_WhileSigned_TransitionsToDispatched()
     {
         var prescription = NewPrescription();
         prescription.Sign();
+
+        prescription.Dispatch();
+
+        Assert.Equal(PrescriptionStatus.Dispatched, prescription.Status);
+    }
+
+    [Fact]
+    public void Dispatch_WhileCreated_ThrowsInvalidPrescriptionStateException()
+    {
+        var prescription = NewPrescription();
+
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Dispatch());
+    }
+
+    [Fact]
+    public void Dispatch_WhenAlreadyDispatched_ThrowsInvalidPrescriptionStateException()
+    {
+        var prescription = NewPrescription();
+        prescription.Sign();
+        prescription.Dispatch();
+
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Dispatch());
+    }
+
+    [Fact]
+    public void Acknowledge_WhileDispatched_TransitionsToAcknowledged()
+    {
+        var prescription = NewPrescription();
+        prescription.Sign();
+        prescription.Dispatch();
 
         prescription.Acknowledge();
 
@@ -127,10 +157,20 @@ public class PrescriptionTests
     }
 
     [Fact]
-    public void Reject_WhileSigned_TransitionsToRejected()
+    public void Acknowledge_WhileSigned_ThrowsInvalidPrescriptionStateException()
     {
         var prescription = NewPrescription();
         prescription.Sign();
+
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Acknowledge());
+    }
+
+    [Fact]
+    public void Reject_WhileDispatched_TransitionsToRejected()
+    {
+        var prescription = NewPrescription();
+        prescription.Sign();
+        prescription.Dispatch();
 
         prescription.Reject();
 
@@ -143,6 +183,43 @@ public class PrescriptionTests
         var prescription = NewPrescription();
 
         Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Reject());
+    }
+
+    [Fact]
+    public void Reject_WhileSigned_ThrowsInvalidPrescriptionStateException()
+    {
+        var prescription = NewPrescription();
+        prescription.Sign();
+
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Reject());
+    }
+
+    [Theory]
+    [InlineData(PrescriptionStatus.Created)]
+    [InlineData(PrescriptionStatus.Signed)]
+    [InlineData(PrescriptionStatus.Dispatched)]
+    public void Expire_FromNonTerminalStatus_TransitionsToExpired(PrescriptionStatus status)
+    {
+        var prescription = Prescription.Rehydrate(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            repeatOfPrescriptionId: null, status, DateTime.UtcNow.AddDays(-3), signedAtUtc: null, OneMedication());
+
+        prescription.Expire();
+
+        Assert.Equal(PrescriptionStatus.Expired, prescription.Status);
+    }
+
+    [Theory]
+    [InlineData(PrescriptionStatus.Acknowledged)]
+    [InlineData(PrescriptionStatus.Rejected)]
+    [InlineData(PrescriptionStatus.Expired)]
+    public void Expire_FromTerminalStatus_ThrowsInvalidPrescriptionStateException(PrescriptionStatus status)
+    {
+        var prescription = Prescription.Rehydrate(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            repeatOfPrescriptionId: null, status, DateTime.UtcNow.AddDays(-3), signedAtUtc: null, OneMedication());
+
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Expire());
     }
 
     [Theory]

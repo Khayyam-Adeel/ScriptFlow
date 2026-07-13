@@ -46,6 +46,19 @@ public sealed class PrescriptionSignedEventHandler
             return;
         }
 
+        // Signed -> Dispatched happens the moment delivery is attempted, before the pharmacy
+        // has answered - ScriptFlow.API's PrescriptionDispatchedEventHandler applies this to
+        // the aggregate so the live status board shows "Dispatched" while the (possibly slow,
+        // possibly retried) call to the pharmacy gateway below is still in flight.
+        await _eventPublisher.PublishAsync(new PrescriptionDispatchedEvent
+        {
+            PrescriptionId = signedEvent.PrescriptionId,
+            Scid = signedEvent.Scid,
+            DispatchedAtUtc = DateTime.UtcNow,
+            Status = PrescriptionStatus.Dispatched,
+            CorrelationId = signedEvent.CorrelationId
+        }, cancellationToken);
+
         var request = new PharmacyDispatchRequest
         {
             PrescriptionId = signedEvent.PrescriptionId,

@@ -4,6 +4,7 @@ using ScriptFlow.API.Application.Handlers;
 using ScriptFlow.API.Application.Interfaces;
 using ScriptFlow.API.Infrastructure.Auth;
 using ScriptFlow.API.Infrastructure.Database;
+using ScriptFlow.API.Infrastructure.Expiry;
 using ScriptFlow.API.Infrastructure.Persistence;
 using Shared.Events;
 using Shared.Infrastructure.Idempotency;
@@ -32,20 +33,42 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
-        AddPrescriptionOutcomeConsumers(services);
+        AddPrescriptionLifecycleConsumers(services);
+        AddPrescriptionExpiry(services, configuration);
 
         return services;
     }
 
-    // Consumes the two outcome events Dispatch.Worker publishes once the pharmacy gateway
-    // has answered, moving Prescription.Status to Acknowledged/Rejected in SQL Server and
-    // publishing PrescriptionStatusChangedEvent for Notification.Service to relay to the
-    // browser. See PrescriptionAcknowledgedEventHandler/PrescriptionRejectedEventHandler.
-    private static void AddPrescriptionOutcomeConsumers(IServiceCollection services)
+    // Periodic sweep that expires prescriptions stuck in a non-terminal state (Created, Signed,
+    // or Dispatched) past a configurable age - see PrescriptionExpiryOptions/PrescriptionExpiryService.
+    private static void AddPrescriptionExpiry(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<PrescriptionExpiryOptions>(configuration.GetSection(PrescriptionExpiryOptions.SectionName));
+        services.AddSingleton<PrescriptionExpiryService>();
+        services.AddHostedService<PrescriptionExpiryBackgroundService>();
+    }
+
+    // Consumes the three lifecycle events Dispatch.Worker publishes (dispatch attempted, then
+    // the pharmacy's eventual answer), moving Prescription.Status to Dispatched/Acknowledged/
+    // Rejected in SQL Server and publishing PrescriptionStatusChangedEvent for
+    // Notification.Service to relay to the browser. See PrescriptionDispatchedEventHandler /
+    // PrescriptionAcknowledgedEventHandler / PrescriptionRejectedEventHandler.
+    private static void AddPrescriptionLifecycleConsumers(IServiceCollection services)
     {
         services.AddSingleton<IProcessedMessageStore, InMemoryProcessedMessageStore>();
+        services.AddSingleton<PrescriptionDispatchedEventHandler>();
         services.AddSingleton<PrescriptionAcknowledgedEventHandler>();
         services.AddSingleton<PrescriptionRejectedEventHandler>();
+
+        services.AddRabbitMqConsumer<PrescriptionDispatchedEvent>(new RabbitMqConsumerSettings
+        {
+            QueueName = "scriptflow-api.prescription-dispatched",
+            RoutingKey = nameof(PrescriptionDispatchedEvent),
+            DeadLetterQueueName = "scriptflow-api.prescription-dispatched.dlq"
+        });
+        services.AddHostedService(provider => new EventConsumerBackgroundService<PrescriptionDispatchedEvent>(
+            provider.GetRequiredService<IEventConsumer<PrescriptionDispatchedEvent>>(),
+            provider.GetRequiredService<PrescriptionDispatchedEventHandler>().HandleAsync));
 
         services.AddRabbitMqConsumer<PrescriptionAcknowledgedEvent>(new RabbitMqConsumerSettings
         {

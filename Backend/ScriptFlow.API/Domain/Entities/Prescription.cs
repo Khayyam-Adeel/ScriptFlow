@@ -7,8 +7,11 @@ namespace ScriptFlow.API.Domain.Entities;
 /// <summary>
 /// Aggregate root for a prescription. Owns the medication list and the lifecycle state
 /// machine: Created -&gt; Signed -&gt; Dispatched -&gt; Acknowledged/Rejected, with Expired
-/// reachable from any non-terminal state. This API only drives Created -&gt; Signed and
-/// spawns repeats; the later states are transitioned by Dispatch.Worker in a future pass.
+/// reachable from any non-terminal state (Created, Signed, or Dispatched). This API drives
+/// Created -&gt; Signed directly (SignPrescriptionCommandHandler) and spawns repeats; Dispatched
+/// and Acknowledged/Rejected are driven by PrescriptionDispatchedEventHandler /
+/// PrescriptionAcknowledgedEventHandler / PrescriptionRejectedEventHandler reacting to events
+/// from Dispatch.Worker, and Expired is driven by PrescriptionExpiryService's periodic sweep.
 /// </summary>
 public sealed class Prescription
 {
@@ -108,18 +111,39 @@ public sealed class Prescription
         SignedAtUtc = DateTime.UtcNow;
     }
 
+    public void Dispatch()
+    {
+        EnsureStatus(PrescriptionStatus.Signed, "dispatch");
+
+        Status = PrescriptionStatus.Dispatched;
+    }
+
     public void Acknowledge()
     {
-        EnsureStatus(PrescriptionStatus.Signed, "acknowledge");
+        EnsureStatus(PrescriptionStatus.Dispatched, "acknowledge");
 
         Status = PrescriptionStatus.Acknowledged;
     }
 
     public void Reject()
     {
-        EnsureStatus(PrescriptionStatus.Signed, "reject");
+        EnsureStatus(PrescriptionStatus.Dispatched, "reject");
 
         Status = PrescriptionStatus.Rejected;
+    }
+
+    /// <summary>Reachable from any non-terminal state - a prescription can go stale while still
+    /// Created (never signed), Signed (never dispatched), or Dispatched (pharmacy never
+    /// answered) - see PrescriptionExpiryService for what actually calls this and when.</summary>
+    public void Expire()
+    {
+        if (Status is PrescriptionStatus.Acknowledged or PrescriptionStatus.Rejected or PrescriptionStatus.Expired)
+        {
+            throw new InvalidPrescriptionStateException(
+                $"Cannot expire a prescription in {Status} status; it is already terminal.");
+        }
+
+        Status = PrescriptionStatus.Expired;
     }
 
     public Prescription Repeat(Guid newId, Scid newScid)
