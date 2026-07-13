@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse } from '../models/auth-response.model';
+import { AuthResponse, CreatedUser } from '../models/auth-response.model';
 import { PrescriptionHubService } from './prescription-hub.service';
 import { TokenStorageService } from './token-storage.service';
 
@@ -40,6 +40,12 @@ export class AuthService {
     return this.http
       .post<AuthResponse>(`${environment.apiBaseUrl}/auth/login`, { email, password })
       .pipe(tap((auth) => this.setSession(auth)));
+  }
+
+  /** Admin-only: creates another Admin account. Unlike register()/login(), this never touches
+   * the current session - the caller stays signed in as themselves, not as the new account. */
+  registerAdmin(email: string, password: string): Observable<CreatedUser> {
+    return this.http.post<CreatedUser>(`${environment.apiBaseUrl}/auth/register-admin`, { email, password });
   }
 
   logout(): void {

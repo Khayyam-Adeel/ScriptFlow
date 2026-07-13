@@ -1,13 +1,22 @@
 -- Same two-result-set shape as usp_Prescription_GetById, but for every prescription matching
 -- the optional filters, replicating InMemoryPrescriptionRepository.ListAsync exactly:
--- both @PatientId and @Status are optional (NULL = no filter on that column).
+-- @PatientId, @ProviderId, @Status, @ScidPrefix, @CreatedFrom and @CreatedToExclusive are all
+-- optional (NULL = no filter on that column). @ScidPrefix is matched as a prefix
+-- (Scid LIKE @ScidPrefix + '%'), not a contains-match, so it stays index-seekable against
+-- IX_Prescriptions_Scid (see Performance/07_IndexPrescriptionsScid.sql) instead of scanning
+-- 1M+ rows. @CreatedTo is exclusive - the caller (ListPrescriptionsQueryHandler) converts an
+-- inclusive "last day to include" into this exclusive upper bound.
 -- Capped at the 200 most recent matches regardless of filter - this is a list view, not an
 -- export; an unfiltered call used to try to return the entire table (1M+ rows after the
 -- performance-chapter seed), which is what broke the dashboard (see usp_Prescription_StatusCounts
 -- for the actual counts-across-everything the dashboard needs instead).
 CREATE OR ALTER PROCEDURE Prescription.usp_Prescription_List
-    @PatientId UNIQUEIDENTIFIER = NULL,
-    @Status    TINYINT          = NULL
+    @PatientId          UNIQUEIDENTIFIER = NULL,
+    @ProviderId         UNIQUEIDENTIFIER = NULL,
+    @Status             TINYINT          = NULL,
+    @ScidPrefix         NVARCHAR(50)     = NULL,
+    @CreatedFrom        DATETIME2        = NULL,
+    @CreatedToExclusive DATETIME2        = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -21,7 +30,11 @@ BEGIN
         FROM Prescription.tblPrescriptions
         WHERE IsDeleted = 0
           AND (@PatientId IS NULL OR PatientId = @PatientId)
+          AND (@ProviderId IS NULL OR ProviderId = @ProviderId)
           AND (@Status IS NULL OR Status = @Status)
+          AND (@ScidPrefix IS NULL OR Scid LIKE @ScidPrefix + '%')
+          AND (@CreatedFrom IS NULL OR CreatedAtUtc >= @CreatedFrom)
+          AND (@CreatedToExclusive IS NULL OR CreatedAtUtc < @CreatedToExclusive)
         ORDER BY CreatedAtUtc DESC;
 
         SELECT * FROM #Filtered ORDER BY CreatedAtUtc DESC;

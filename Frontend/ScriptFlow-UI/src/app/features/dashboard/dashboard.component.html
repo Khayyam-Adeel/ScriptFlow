@@ -9,13 +9,92 @@
 @if (loading()) {
   <app-spinner />
 } @else {
-  <h2>Prescriptions by status</h2>
-  <div class="status-grid">
-    @for (item of statusCounts(); track item.status) {
-      <a class="status-tile" [routerLink]="['/prescriptions']" [queryParams]="{ status: item.status }">
-        <app-status-badge [status]="item.status" />
-        <span class="count">{{ item.count }}</span>
-      </a>
-    }
+  <div class="stat-row">
+    <div class="stat-tile">
+      <span class="stat-label">Total prescriptions</span>
+      <span class="stat-value">{{ totalCount() }}</span>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Created today</span>
+      <span class="stat-value">{{ createdToday() }}</span>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Pending signature</span>
+      <span class="stat-value">{{ pendingCount() }}</span>
+    </div>
   </div>
+
+  <div class="dashboard-grid">
+    <section class="panel">
+      <h2>Prescriptions by status</h2>
+      <div class="status-bars">
+        @for (item of statusCounts(); track item.status) {
+          <a
+            class="status-bar-row"
+            [routerLink]="['/prescriptions']"
+            [queryParams]="{ status: item.status }"
+            [attr.title]="item.status + ': ' + item.count"
+          >
+            <app-status-badge [status]="item.status" />
+            <span class="status-bar-track">
+              <span
+                class="status-bar-fill"
+                [class]="'status-bar-' + item.status.toLowerCase()"
+                [style.width.%]="(item.count / maxStatusCount()) * 100"
+              ></span>
+            </span>
+            <span class="status-bar-count">{{ item.count }}</span>
+          </a>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Volume, last 14 days</h2>
+      @if (dailyVolume().length > 0) {
+        <div class="trend-chart">
+          @for (day of dailyVolume(); track day.date) {
+            <div
+              class="trend-bar"
+              tabindex="0"
+              [attr.title]="(day.date | date: 'EEE, MMM d') + ': ' + day.count"
+              [style.height.%]="(day.count / maxDailyCount()) * 100"
+            ></div>
+          }
+        </div>
+        <div class="trend-axis">
+          <span>{{ dailyVolume()[0].date | date: 'MMM d' }}</span>
+          <span>Today</span>
+        </div>
+      } @else {
+        <p class="empty">No data yet.</p>
+      }
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Recently created</h2>
+    @if (recentPrescriptions().length === 0) {
+      <p class="empty">No prescriptions yet.</p>
+    } @else {
+      <table class="recent-table">
+        <thead>
+          <tr>
+            <th>SCID</th>
+            <th>Status</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prescription of recentPrescriptions(); track prescription.id) {
+            <tr [routerLink]="['/prescriptions', prescription.id]">
+              <td>{{ prescription.scid }}</td>
+              <td><app-status-badge [status]="prescription.status" /></td>
+              <td>{{ prescription.createdAtUtc | date: 'medium' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
 }

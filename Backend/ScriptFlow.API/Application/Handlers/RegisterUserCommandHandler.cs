@@ -29,9 +29,10 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
             throw new DomainException($"A user with email '{request.Email}' already exists.");
         }
 
-        // Self-registration always creates a Prescriber - never client-supplied - so there is
-        // no way to escalate to Admin via this endpoint. Promoting a user to Admin is a
-        // deliberate, out-of-band operation (see SECURITY.md), not something this API exposes.
+        // Self-registration always creates a Prescriber - never client-supplied - so there is no
+        // way to escalate to Admin via this anonymous endpoint. Creating an Admin account
+        // requires an existing Admin (see RegisterAdminUserCommandHandler / SECURITY.md); the
+        // very first Admin in a deployment is still a one-off SQL UPDATE.
         var user = new User(Guid.NewGuid(), request.Email, _passwordHasher.Hash(request.Password), UserRole.Prescriber);
         await _users.AddAsync(user, cancellationToken);
 

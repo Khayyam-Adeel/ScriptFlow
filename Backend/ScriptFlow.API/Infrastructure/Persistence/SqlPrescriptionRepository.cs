@@ -83,12 +83,21 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
     }
 
     public async Task<IReadOnlyCollection<Prescription>> ListAsync(
-        Guid? patientId, PrescriptionStatus? status, CancellationToken cancellationToken = default)
+        Guid? patientId, Guid? providerId, PrescriptionStatus? status, string? scidPrefix,
+        DateTime? createdFrom, DateTime? createdToExclusive, CancellationToken cancellationToken = default)
     {
         using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
         using var results = await connection.QueryMultipleAsync(new CommandDefinition(
             "Prescription.usp_Prescription_List",
-            new { PatientId = patientId, Status = (byte?)status },
+            new
+            {
+                PatientId = patientId,
+                ProviderId = providerId,
+                Status = (byte?)status,
+                ScidPrefix = scidPrefix,
+                CreatedFrom = createdFrom,
+                CreatedToExclusive = createdToExclusive
+            },
             commandType: CommandType.StoredProcedure,
             cancellationToken: cancellationToken));
 
@@ -118,6 +127,21 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
         // statuses exist - simpler than making the frontend fill in the gaps.
         return Enum.GetValues<PrescriptionStatus>()
             .Select(status => new PrescriptionStatusCountDto(status, countsByStatus.GetValueOrDefault(status)))
+            .ToList();
+    }
+
+    public async Task<IReadOnlyCollection<PrescriptionDailyVolumeDto>> GetDailyVolumeAsync(
+        DateTime sinceUtc, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var rows = await connection.QueryAsync<DailyVolumeRow>(new CommandDefinition(
+            "Prescription.usp_Prescription_DailyVolume",
+            new { Since = sinceUtc },
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken));
+
+        return rows
+            .Select(r => new PrescriptionDailyVolumeDto(DateOnly.FromDateTime(r.CreatedDate), r.Cnt))
             .ToList();
     }
 
@@ -172,4 +196,6 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
         Guid PrescriptionId);
 
     private sealed record StatusCountRow(byte Status, int Cnt);
+
+    private sealed record DailyVolumeRow(DateTime CreatedDate, int Cnt);
 }

@@ -16,7 +16,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 export class TextFieldComponent {
   @Input({ required: true }) label = '';
   @Input({ required: true }) control!: FormControl;
-  @Input() type: 'text' | 'email' | 'password' | 'number' = 'text';
+  @Input() type: 'text' | 'email' | 'password' | 'number' | 'date' = 'text';
   @Input() placeholder = '';
   @Input() errorMessage = '';
   @Input() fullWidth = false;

@@ -18,19 +18,26 @@ logged in plaintext. Every data controller carries `[Authorize]`
 **Authorization.** Role-based: `User` carries a `Role` (`Prescriber`/`Admin`,
 `Shared.contract.Enums.UserRole`), included as a `ClaimTypes.Role` claim in the JWT
 (`Infrastructure/Auth/JwtTokenGenerator.cs`) so ASP.NET Core's
-`[Authorize(Roles = ...)]` enforces it natively. Scoped to the one genuinely
-administrative action that exists today: `POST /api/providers` (registering a new
-provider into the system) is Admin-only
-(`APi/Controllers/ProvidersController.cs`); everything else stays open to any
+`[Authorize(Roles = ...)]` enforces it natively. Scoped to the two genuinely
+administrative actions that exist today: `POST /api/providers` (registering a new
+provider into the system) and `POST /api/auth/register-admin` (creating another
+Admin account) are both Admin-only (`APi/Controllers/ProvidersController.cs`,
+`APi/Controllers/AuthController.cs`); everything else stays open to any
 authenticated user, since patient/prescription management is normal day-to-day
-clinical work for either role. Self-registration always creates a `Prescriber` —
-the role is never client-supplied — closing the obvious self-escalation path;
-promoting a user to Admin is a documented one-off SQL `UPDATE`, not an exposed
-endpoint. Verified end-to-end against the real API: a fresh Prescriber gets **403**
-on `POST /api/providers`; the same user, promoted to Admin, gets **201**. Known,
-accepted gap: no per-practice/ownership scoping on reads yet (e.g. one provider can
-fetch another provider's prescriptions by id) — a further-work item, not silently
-omitted.
+clinical work for either role. Self-registration (`POST /api/auth/register`,
+anonymous) always creates a `Prescriber` — the role is never client-supplied there —
+closing the obvious self-escalation path: an unauthenticated caller can never mint
+an Admin account. The only path to a new Admin account is `register-admin`, which
+requires an existing Admin's bearer token and, unlike `register`, deliberately does
+not return a token for the account it creates - the caller stays signed in as
+themselves. The very first Admin in a deployment still has no bootstrap endpoint by
+design (nothing can call an Admin-only route before an Admin exists) and is created
+via a one-off SQL `UPDATE` against a self-registered user. Verified end-to-end
+against the real API: a fresh Prescriber gets **403** on both `POST /api/providers`
+and `POST /api/auth/register-admin`; the same user, promoted to Admin, gets **201**
+on both. Known, accepted gap: no per-practice/ownership scoping on reads yet (e.g.
+one provider can fetch another provider's prescriptions by id) — a further-work
+item, not silently omitted.
 
 **Input validation.** Every mutating command has a FluentValidation validator
 (`Application/Validators/*.cs`, 9 files covering all 8 commands, including a shared
@@ -56,7 +63,7 @@ fails to connect (fail closed) instead of silently working against a shipped def
 
 | # | Category | Status | Notes |
 |---|---|---|---|
-| A01 | Broken Access Control | **Addressed (partial)** | Role-based authorization added: `User.Role` (`Prescriber`/`Admin`) flows into the JWT and gates `POST /api/providers` to Admin only — verified end-to-end (Prescriber → 403, promoted Admin → 201). Self-registration can never create an Admin (role is hardcoded server-side, not client-supplied). Remaining gap: no per-practice/ownership scoping on reads yet (e.g. one provider can fetch another provider's prescriptions by id) — tracked as further work, not silently omitted. |
+| A01 | Broken Access Control | **Addressed (partial)** | Role-based authorization added: `User.Role` (`Prescriber`/`Admin`) flows into the JWT and gates `POST /api/providers` and `POST /api/auth/register-admin` to Admin only — verified end-to-end (Prescriber → 403, promoted Admin → 201, on both). Self-registration (`POST /api/auth/register`) can never create an Admin (role is hardcoded server-side, not client-supplied); the only way to create an Admin account is either `register-admin` (requires an existing Admin's token) or a one-off SQL `UPDATE` for a deployment's very first Admin. Remaining gap: no per-practice/ownership scoping on reads yet (e.g. one provider can fetch another provider's prescriptions by id) — tracked as further work, not silently omitted. |
 | A02 | Cryptographic Failures | Addressed | Passwords: PBKDF2 via `PasswordHasher<T>`. JWTs: HMAC-SHA256, short-lived (60 min default), signing key sourced from config/env, never in source. HTTPS redirection enabled (`Program.cs`). Minor accepted risk: `TrustServerCertificate=True` on the SQL connection string weakens TLS validation — standard for local/dev SQL Server containers, should use a real cert in any hosted environment. |
 | A03 | Injection | Addressed | 100% of data access is parameterized stored-procedure calls via Dapper (see baseline above); verified by grep across `Infrastructure/Persistence/` — no dynamic SQL exists. |
 | A04 | Insecure Design | Partial | The prescription lifecycle is modeled as an explicit state machine with guard clauses (`Domain/Entities/Prescription.cs`), and validation runs at the API boundary before any handler executes. Gap: no rate limiting/throttling on `AuthController`'s login endpoint — a brute-force/credential-stuffing risk with no mitigation today. |

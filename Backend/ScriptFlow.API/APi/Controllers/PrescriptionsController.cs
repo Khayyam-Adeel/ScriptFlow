@@ -67,11 +67,28 @@ public sealed class PrescriptionsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>For the dashboard's volume trend chart - prescriptions created per day over a
+    /// fixed recent window. "daily-volume" is a fixed literal, so it never collides with
+    /// GetById's {id:guid} route.</summary>
+    [HttpGet("daily-volume")]
+    public async Task<IActionResult> GetDailyVolume(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetPrescriptionDailyVolumeQuery(), cancellationToken);
+        return Ok(result);
+    }
+
     [HttpGet]
     public async Task<IActionResult> List(
-        [FromQuery] Guid? patientId, [FromQuery] PrescriptionStatus? status, CancellationToken cancellationToken)
+        [FromQuery] Guid? patientId,
+        [FromQuery] Guid? providerId,
+        [FromQuery] PrescriptionStatus? status,
+        [FromQuery] string? scid,
+        [FromQuery] DateTime? createdFrom,
+        [FromQuery] DateTime? createdTo,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new ListPrescriptionsQuery(patientId, status), cancellationToken);
+        var result = await _mediator.Send(
+            new ListPrescriptionsQuery(patientId, providerId, status, scid, createdFrom, createdTo), cancellationToken);
         return Ok(result);
     }
 }

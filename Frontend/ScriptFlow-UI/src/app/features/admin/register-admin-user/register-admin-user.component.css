@@ -1,0 +1,8 @@
+h1 {
+  margin-bottom: var(--space-2);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-5);
+}

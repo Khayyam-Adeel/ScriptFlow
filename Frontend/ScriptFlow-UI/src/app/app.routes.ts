@@ -54,6 +54,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'admin/register-admin',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/register-admin-user/register-admin-user.component').then(
+            (m) => m.RegisterAdminUserComponent,
+          ),
+      },
+      {
         path: 'providers/:id',
         loadComponent: () =>
           import('./features/providers/provider-detail/provider-detail.component').then(

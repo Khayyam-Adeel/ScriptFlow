@@ -3,14 +3,61 @@
   <app-button [routerLink]="['/prescriptions/new']">+ New prescription</app-button>
 </div>
 
-<div class="filter-bar">
-  <app-select-field
-    label="Filter by status"
-    [control]="statusControl"
-    [options]="statusOptions"
-    placeholder="All statuses"
-  />
-  <span class="live-indicator" title="Refreshes automatically every 5 seconds">● Live</span>
+<div class="filters-panel">
+  <div class="filter-grid">
+    <app-select-field
+      label="Filter by status"
+      [control]="statusControl"
+      [options]="statusOptions"
+      placeholder="All statuses"
+    />
+    <app-text-field label="SCID" [control]="scidControl" placeholder="Starts with…" />
+    <app-text-field label="Created from" type="date" [control]="createdFromControl" />
+    <app-text-field label="Created to" type="date" [control]="createdToControl" />
+
+    <div class="picker">
+      <label>Patient</label>
+      @if (selectedPatient(); as patient) {
+        <div class="selected-chip">
+          <span>{{ patient.firstName }} {{ patient.lastName }} · {{ patient.nhi }}</span>
+          <button type="button" class="chip-clear" (click)="clearSelectedPatient()" aria-label="Clear patient filter">✕</button>
+        </div>
+      } @else {
+        <input class="picker-search" type="search" [formControl]="patientQuery" placeholder="Search patients…" />
+        @if (patientResults().length > 0) {
+          <ul class="picker-results">
+            @for (patient of patientResults(); track patient.id) {
+              <li (click)="selectPatient(patient)">{{ patient.firstName }} {{ patient.lastName }} · {{ patient.nhi }}</li>
+            }
+          </ul>
+        }
+      }
+    </div>
+
+    <div class="picker">
+      <label>Provider</label>
+      @if (selectedProvider(); as provider) {
+        <div class="selected-chip">
+          <span>{{ provider.firstName }} {{ provider.lastName }}</span>
+          <button type="button" class="chip-clear" (click)="clearSelectedProvider()" aria-label="Clear provider filter">✕</button>
+        </div>
+      } @else {
+        <input class="picker-search" type="search" [formControl]="providerQuery" placeholder="Search providers…" />
+        @if (providerResults().length > 0) {
+          <ul class="picker-results">
+            @for (provider of providerResults(); track provider.id) {
+              <li (click)="selectProvider(provider)">{{ provider.firstName }} {{ provider.lastName }}</li>
+            }
+          </ul>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="filter-footer">
+    <button type="button" class="link-btn" (click)="clearFilters()">Clear all filters</button>
+    <span class="live-indicator" title="Refreshes automatically every 5 seconds">● Live</span>
+  </div>
 </div>
 
 @if (!loading() && prescriptions().length === 0) {
@@ -26,7 +73,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (prescription of prescriptions(); track prescription.id) {
+      @for (prescription of pagedPrescriptions(); track prescription.id) {
         <tr [routerLink]="['/prescriptions', prescription.id]">
           <td>{{ prescription.scid }}</td>
           <td><app-status-badge [status]="prescription.status" /></td>
@@ -36,4 +83,12 @@
       }
     </tbody>
   </table>
+
+  @if (pageCount() > 1) {
+    <div class="pagination">
+      <app-button variant="secondary" [disabled]="currentPage() === 1" (clicked)="previousPage()">‹ Previous</app-button>
+      <span class="pagination-status">Page {{ currentPage() }} of {{ pageCount() }}</span>
+      <app-button variant="secondary" [disabled]="currentPage() === pageCount()" (clicked)="nextPage()">Next ›</app-button>
+    </div>
+  }
 }

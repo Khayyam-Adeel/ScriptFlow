@@ -54,3 +54,9 @@ export interface PrescriptionStatusCount {
   status: PrescriptionStatus;
   count: number;
 }
+
+// Mirrors ScriptFlow.API.Application.DTOs.PrescriptionDailyVolumeDto
+export interface PrescriptionDailyVolume {
+  date: string;
+  count: number;
+}
