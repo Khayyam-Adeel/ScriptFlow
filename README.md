@@ -314,6 +314,20 @@ picking it up on a Docker-enabled machine should treat first run as a validation
 pass (build errors, port conflicts, and connection-string/env-var mismatches are
 the most likely issues), not an already-proven deployment path.
 
+**Update:** the underlying reason `docker-compose.yml` remains unverified narrowed
+since this ADR was written — Docker Desktop is now installed on this machine, but
+its daemon can't start because WSL2 itself isn't installed (`wsl --install` needs
+admin rights and a restart, neither available here). What *did* become verifiable
+without Docker is the database bootstrap `docker-compose.yml`'s `db-init` service
+runs (`Infrastructure/Database/Schema/00_CreateSchema.sql`,
+`01_SeedSystemUser.sql`, every `StoredProcedures/*.sql`, then
+`Performance/01_ExpandLookupData.sql`) — each was run in that exact order against a
+real, brand-new SQL Server database (not a container, but the same SQL Server
+engine) and produced a working, fully-seeded schema. So the piece most likely to
+be wrong (the SQL itself) is now confirmed correct; what's still unverified is
+narrower - purely the container orchestration around it (healthchecks, service
+dependency ordering, container networking).
+
 ## 7. Security
 
 See [`SECURITY.md`](SECURITY.md) for the security baseline (authentication,

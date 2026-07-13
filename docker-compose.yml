@@ -1,11 +1,19 @@
-# Local, all-in-one orchestration for running the full ScriptFlow stack in
-# Docker. Written to be Docker-ready ahead of need: Docker Desktop isn't
-# available on our office Windows machines (IT-restricted), so this file has
-# NOT been run/verified end-to-end. Treat it as a documented starting point —
-# review images/ports/env vars against your target environment before relying
-# on it, and see ADR-004 in README.md for the reasoning.
+# Local, all-in-one orchestration for running the full ScriptFlow stack in Docker.
+#
+# Status: the SQL scripts db-init runs (Schema/00_CreateSchema.sql, Schema/01_SeedSystemUser.sql,
+# every StoredProcedures/*.sql, Performance/01_ExpandLookupData.sql) are verified - each one was
+# run in sequence against a real, brand-new SQL Server database and produced a working schema
+# with seed data (see the commit that added them). The compose file wiring itself (healthchecks,
+# service dependency ordering, container networking) is NOT verified end-to-end: this machine's
+# Docker Desktop can't start because WSL2 isn't installed here (`wsl --install` needs admin +
+# a restart), so `docker compose up` has never actually been run. Review images/ports/env vars
+# against your target environment before relying on it.
 #
 # Usage (once Docker is available): docker compose up --build
+# First run seeds Practices/PracticeLocations/Providers/Patients/Medicines (not the 1M+ row
+# performance dataset - see Performance/02_SeedPrescriptions.sql to add that separately, it
+# takes a while). Re-running against the same sqlserver-data volume skips re-seeding (db-init
+# checks whether Profile.tblUsers already has rows first).
 
 services:
   sqlserver:
@@ -17,12 +25,39 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # One-shot: creates the ScriptFlow database (schema, stored procedures) and seeds lookup/master
+  # data, then exits. scriptflow-api won't start until this completes successfully - see
+  # Backend/ScriptFlow.API/Infrastructure/Database/docker-init.sh for what it actually runs.
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      SQLSERVER_HOST: sqlserver
+      MSSQL_SA_PASSWORD: "Your_password123"
+    volumes:
+      - ./Backend/ScriptFlow.API/Infrastructure/Database:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/docker-init.sh"]
 
   pharmacy-gateway:
     build:
@@ -51,8 +86,10 @@ services:
     ports:
       - "5006:8080"
     depends_on:
-      - sqlserver
-      - rabbitmq
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
 
   dispatch-worker:
     build:
@@ -68,8 +105,10 @@ services:
       PharmacyGateway__BaseUrl: "http://pharmacy-gateway:8080"
       PharmacyGateway__TimeoutSeconds: "10"
     depends_on:
-      - rabbitmq
-      - pharmacy-gateway
+      rabbitmq:
+        condition: service_healthy
+      pharmacy-gateway:
+        condition: service_started
 
   notification-service:
     build:
@@ -89,7 +128,8 @@ services:
     ports:
       - "5100:8080"
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
   scriptflow-ui:
     build:
