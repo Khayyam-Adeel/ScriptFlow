@@ -1,4 +1,5 @@
 using ScriptFlow.API.Domain.Exceptions;
+using Shared.contract.Enums;
 
 namespace ScriptFlow.API.Domain.Entities;
 
@@ -8,8 +9,9 @@ public sealed class User
     public Guid Id { get; }
     public string Email { get; }
     public string PasswordHash { get; }
+    public UserRole Role { get; }
 
-    public User(Guid id, string email, string passwordHash)
+    public User(Guid id, string email, string passwordHash, UserRole role)
     {
         if (string.IsNullOrWhiteSpace(email))
         {
@@ -24,5 +26,6 @@ public sealed class User
         Id = id;
         Email = email.Trim().ToLowerInvariant();
         PasswordHash = passwordHash;
+        Role = role;
     }
 }

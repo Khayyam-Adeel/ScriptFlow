@@ -4,6 +4,7 @@ using ScriptFlow.API.Application.DTOs;
 using ScriptFlow.API.Application.Interfaces;
 using ScriptFlow.API.Domain.Entities;
 using ScriptFlow.API.Domain.Exceptions;
+using Shared.contract.Enums;
 
 namespace ScriptFlow.API.Application.Handlers;
 
@@ -28,10 +29,13 @@ public sealed class RegisterUserCommandHandler : IRequestHandler<RegisterUserCom
             throw new DomainException($"A user with email '{request.Email}' already exists.");
         }
 
-        var user = new User(Guid.NewGuid(), request.Email, _passwordHasher.Hash(request.Password));
+        // Self-registration always creates a Prescriber - never client-supplied - so there is
+        // no way to escalate to Admin via this endpoint. Promoting a user to Admin is a
+        // deliberate, out-of-band operation (see SECURITY.md), not something this API exposes.
+        var user = new User(Guid.NewGuid(), request.Email, _passwordHasher.Hash(request.Password), UserRole.Prescriber);
         await _users.AddAsync(user, cancellationToken);
 
         var (token, expiresAtUtc) = _jwtTokenGenerator.Generate(user);
-        return new AuthResponse(user.Email, token, expiresAtUtc);
+        return new AuthResponse(user.Email, user.Role.ToString(), token, expiresAtUtc);
     }
 }

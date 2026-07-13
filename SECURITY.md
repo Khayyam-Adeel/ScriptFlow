@@ -15,11 +15,22 @@ by both services. Passwords are hashed with ASP.NET Core Identity's PBKDF2
 logged in plaintext. Every data controller carries `[Authorize]`
 (`APi/Controllers/*.cs`); only register/login are anonymous, by design.
 
-**Authorization.** Currently authentication-only — any authenticated user can call
-any endpoint. There is no role concept (`Domain/Entities/User.cs` has no `Role`
-field) and no per-practice/ownership scoping on reads (e.g. one provider can fetch
-another provider's prescriptions by id). This is a known, tracked gap — see A01
-below — deliberately deferred to a separate pass, not silently omitted.
+**Authorization.** Role-based: `User` carries a `Role` (`Prescriber`/`Admin`,
+`Shared.contract.Enums.UserRole`), included as a `ClaimTypes.Role` claim in the JWT
+(`Infrastructure/Auth/JwtTokenGenerator.cs`) so ASP.NET Core's
+`[Authorize(Roles = ...)]` enforces it natively. Scoped to the one genuinely
+administrative action that exists today: `POST /api/providers` (registering a new
+provider into the system) is Admin-only
+(`APi/Controllers/ProvidersController.cs`); everything else stays open to any
+authenticated user, since patient/prescription management is normal day-to-day
+clinical work for either role. Self-registration always creates a `Prescriber` —
+the role is never client-supplied — closing the obvious self-escalation path;
+promoting a user to Admin is a documented one-off SQL `UPDATE`, not an exposed
+endpoint. Verified end-to-end against the real API: a fresh Prescriber gets **403**
+on `POST /api/providers`; the same user, promoted to Admin, gets **201**. Known,
+accepted gap: no per-practice/ownership scoping on reads yet (e.g. one provider can
+fetch another provider's prescriptions by id) — a further-work item, not silently
+omitted.
 
 **Input validation.** Every mutating command has a FluentValidation validator
 (`Application/Validators/*.cs`, 9 files covering all 8 commands, including a shared
@@ -45,7 +56,7 @@ fails to connect (fail closed) instead of silently working against a shipped def
 
 | # | Category | Status | Notes |
 |---|---|---|---|
-| A01 | Broken Access Control | **Gap** | Authentication is enforced everywhere, but there is no role-based authorization and no ownership/tenant scoping on reads — any authenticated user can access any other user's data by id. Tracked as a separate, deliberately deferred piece of work. |
+| A01 | Broken Access Control | **Addressed (partial)** | Role-based authorization added: `User.Role` (`Prescriber`/`Admin`) flows into the JWT and gates `POST /api/providers` to Admin only — verified end-to-end (Prescriber → 403, promoted Admin → 201). Self-registration can never create an Admin (role is hardcoded server-side, not client-supplied). Remaining gap: no per-practice/ownership scoping on reads yet (e.g. one provider can fetch another provider's prescriptions by id) — tracked as further work, not silently omitted. |
 | A02 | Cryptographic Failures | Addressed | Passwords: PBKDF2 via `PasswordHasher<T>`. JWTs: HMAC-SHA256, short-lived (60 min default), signing key sourced from config/env, never in source. HTTPS redirection enabled (`Program.cs`). Minor accepted risk: `TrustServerCertificate=True` on the SQL connection string weakens TLS validation — standard for local/dev SQL Server containers, should use a real cert in any hosted environment. |
 | A03 | Injection | Addressed | 100% of data access is parameterized stored-procedure calls via Dapper (see baseline above); verified by grep across `Infrastructure/Persistence/` — no dynamic SQL exists. |
 | A04 | Insecure Design | Partial | The prescription lifecycle is modeled as an explicit state machine with guard clauses (`Domain/Entities/Prescription.cs`), and validation runs at the API boundary before any handler executes. Gap: no rate limiting/throttling on `AuthController`'s login endpoint — a brute-force/credential-stuffing risk with no mitigation today. |
@@ -58,12 +69,12 @@ fails to connect (fail closed) instead of silently working against a shipped def
 
 ## Summary
 
-Four issues have been found and fixed across two passes: an information-disclosure bug
-in the global exception handler and a transitive vulnerable-package chain in the test
-project (A05/A06), plus a committed default RabbitMQ credential, missing login
-throttling, and missing server-side token revocation (A05/A07) — the last two verified
-end-to-end against a real database and message broker, not just reasoned about. Three
-items remain open and are tracked as deliberate, separate follow-up work rather than
-silently accepted: role-based authorization (A01), the Angular dependency upgrade
-(A06), and JWT storage in `localStorage` plus production-grade log aggregation/alerting
-(A07/A09).
+Five issues have been found and fixed across three passes: an information-disclosure
+bug in the global exception handler and a transitive vulnerable-package chain in the
+test project (A05/A06); a committed default RabbitMQ credential, missing login
+throttling, and missing server-side token revocation (A05/A07); and missing
+role-based authorization (A01) — all verified end-to-end against a real database,
+message broker, and running API, not just reasoned about. Two items remain open and
+are tracked as deliberate, separate follow-up work rather than silently accepted: the
+Angular dependency upgrade (A06), and JWT storage in `localStorage` plus
+production-grade log aggregation/alerting (A07/A09).

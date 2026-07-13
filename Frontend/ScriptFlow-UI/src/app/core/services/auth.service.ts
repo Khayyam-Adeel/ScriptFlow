@@ -16,6 +16,7 @@ export class AuthService {
     const user = this.currentUser();
     return user !== null && new Date(user.expiresAtUtc).getTime() > Date.now();
   });
+  readonly isAdmin = computed(() => this.currentUser()?.role === 'Admin');
 
   constructor(
     private readonly http: HttpClient,

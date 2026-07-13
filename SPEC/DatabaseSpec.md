@@ -64,6 +64,7 @@ CREATE TABLE Profile.tblUsers
     Id              UNIQUEIDENTIFIER NOT NULL CONSTRAINT DF_Users_Id DEFAULT NEWID(),
     Email           NVARCHAR(256)    NOT NULL,
     PasswordHash    NVARCHAR(512)    NOT NULL,
+    Role            TINYINT          NOT NULL CONSTRAINT DF_Users_Role DEFAULT (0), -- 0=Prescriber, 1=Admin (Shared.contract.Enums.UserRole)
     IsActive        BIT              NOT NULL CONSTRAINT DF_Users_IsActive DEFAULT (1),
     IsDeleted       BIT              NOT NULL CONSTRAINT DF_Users_IsDeleted DEFAULT (0),
     InsertedAt      DATETIME2(3)     NOT NULL CONSTRAINT DF_Users_InsertedAt DEFAULT SYSUTCDATETIME(),
@@ -71,7 +72,8 @@ CREATE TABLE Profile.tblUsers
     InsertedBy      UNIQUEIDENTIFIER NOT NULL,
     UpdatedBy       UNIQUEIDENTIFIER NULL,
     CONSTRAINT PK_Users PRIMARY KEY CLUSTERED (Id),
-    CONSTRAINT UQ_Users_Email UNIQUE (Email)
+    CONSTRAINT UQ_Users_Email UNIQUE (Email),
+    CONSTRAINT CK_Users_Role CHECK (Role IN (0, 1))
 );
 
 CREATE TABLE Admin.tblPractices

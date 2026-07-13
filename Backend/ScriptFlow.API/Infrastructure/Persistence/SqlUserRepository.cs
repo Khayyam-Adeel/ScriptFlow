@@ -3,6 +3,7 @@ using Dapper;
 using ScriptFlow.API.Application.Interfaces;
 using ScriptFlow.API.Domain.Entities;
 using ScriptFlow.API.Infrastructure.Database;
+using Shared.contract.Enums;
 
 namespace ScriptFlow.API.Infrastructure.Persistence;
 
@@ -24,7 +25,7 @@ public sealed class SqlUserRepository : IUserRepository
             commandType: CommandType.StoredProcedure,
             cancellationToken: cancellationToken));
 
-        return row is null ? null : new User(row.Id, row.Email, row.PasswordHash);
+        return row is null ? null : new User(row.Id, row.Email, row.PasswordHash, (UserRole)row.Role);
     }
 
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
@@ -32,10 +33,10 @@ public sealed class SqlUserRepository : IUserRepository
         using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(
             "Profile.usp_User_Create",
-            new { user.Id, user.Email, user.PasswordHash },
+            new { user.Id, user.Email, user.PasswordHash, Role = (byte)user.Role },
             commandType: CommandType.StoredProcedure,
             cancellationToken: cancellationToken));
     }
 
-    private sealed record UserRow(Guid Id, string Email, string PasswordHash);
+    private sealed record UserRow(Guid Id, string Email, string PasswordHash, byte Role);
 }

@@ -21,7 +21,11 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         }
 
         const problem = error.error as Partial<ProblemDetails> | null;
-        notifications.error('Something went wrong. Please try again.');
+        notifications.error(
+          error.status === 403
+            ? "You don't have permission to do that."
+            : 'Something went wrong. Please try again.',
+        );
       }
 
       return throwError(() => error);

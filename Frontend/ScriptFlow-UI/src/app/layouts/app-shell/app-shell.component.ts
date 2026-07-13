@@ -17,6 +17,7 @@ export class AppShellComponent {
   private readonly router = inject(Router);
 
   readonly user = this.authService.user;
+  readonly isAdmin = this.authService.isAdmin;
 
   logout(): void {
     this.authService.logout();

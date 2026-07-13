@@ -4,7 +4,9 @@
     <nav>
       <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
       <a routerLink="/patients" routerLinkActive="active">Patients</a>
-      <a routerLink="/providers/new" routerLinkActive="active">Providers</a>
+      @if (isAdmin()) {
+        <a routerLink="/providers/new" routerLinkActive="active">Providers</a>
+      }
       <a routerLink="/prescriptions" routerLinkActive="active">Prescriptions</a>
     </nav>
   </aside>

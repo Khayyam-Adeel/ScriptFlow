@@ -57,22 +57,16 @@ public sealed class PrimaryWorkflowIntegrationTests : IClassFixture<ScriptFlowAp
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth!.Token);
 
         // 2. Reuse existing seeded master data (performance chapter already left plenty).
+        // Providers are reused too, not created here: registering a new provider is an
+        // Admin-only action (see ProvidersController.Create) and this test's self-registered
+        // user is a Prescriber, same as any real self-registered user - this test is about the
+        // prescription workflow, not provider management, so it works with what's already there.
         var practiceLocation = (await client.GetFromJsonAsync<List<PracticeLocationDto>>(
             "/api/practice-locations", JsonOptions))!.First();
         var medicine = (await client.GetFromJsonAsync<List<MedicineDto>>(
             "/api/medicines", JsonOptions))!.First();
-
-        // 3. Real provider + patient rows via the real stored procedures.
-        var providerResponse = await client.PostAsJsonAsync("/api/providers", new
-        {
-            firstName = "Integration",
-            lastName = "Tester",
-            type = ProviderType.Doctor,
-            nzmcNo = $"IT{runId}",
-            practiceLocationId = practiceLocation.Id
-        }, JsonOptions);
-        providerResponse.EnsureSuccessStatusCode();
-        var provider = await providerResponse.Content.ReadFromJsonAsync<ProviderDto>(JsonOptions);
+        var provider = (await client.GetFromJsonAsync<List<ProviderDto>>(
+            "/api/providers", JsonOptions))!.First();
 
         // NHI must be exactly 3 letters + 4 digits - derive both deterministically from a
         // hash of runId rather than slicing runId's hex characters directly (hex includes

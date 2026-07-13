@@ -27,6 +27,6 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResp
         }
 
         var (token, expiresAtUtc) = _jwtTokenGenerator.Generate(user);
-        return new AuthResponse(user.Email, token, expiresAtUtc);
+        return new AuthResponse(user.Email, user.Role.ToString(), token, expiresAtUtc);
     }
 }

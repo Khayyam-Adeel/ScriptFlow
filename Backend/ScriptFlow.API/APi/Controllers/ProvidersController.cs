@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScriptFlow.API.Application.Commands;
 using ScriptFlow.API.Application.Queries;
+using Shared.contract.Enums;
 
 namespace ScriptFlow.API.Api.Controllers;
 
@@ -18,6 +19,9 @@ public sealed class ProvidersController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>Registering a new provider is an administrative action - Admin only. Any
+    /// authenticated user can still browse the provider list/detail below.</summary>
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateProviderCommand command, CancellationToken cancellationToken)
     {
