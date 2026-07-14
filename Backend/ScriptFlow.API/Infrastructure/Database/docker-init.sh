@@ -52,9 +52,16 @@ echo "Seeding system user..."
 run_sql -d ScriptFlow -i "$SCRIPTS_DIR/Schema/01_SeedSystemUser.sql"
 
 echo "Deploying stored procedures..."
+# QUOTED_IDENTIFIER ON explicitly, in the same batch as each CREATE OR ALTER, rather than
+# relying on sqlcmd's own default: a stored procedure's QUOTED_IDENTIFIER setting is baked in
+# at CREATE/ALTER time and does not change afterwards regardless of the caller's session
+# settings (see Performance/05_FixQuotedIdentifierForFilteredIndex.sql for the exact regression
+# this caused before), and Linux mssql-tools18's sqlcmd defaulting differently than Windows'
+# sqlcmd here would silently compile every proc wrong for the filtered indexes on
+# Prescription.tblPrescriptions.
 for f in "$SCRIPTS_DIR"/StoredProcedures/*/*.sql; do
     echo "  $f"
-    run_sql -d ScriptFlow -i "$f"
+    { echo "SET QUOTED_IDENTIFIER ON;"; echo "GO"; cat "$f"; } | run_sql -d ScriptFlow
 done
 
 echo "Seeding lookup/master data..."
