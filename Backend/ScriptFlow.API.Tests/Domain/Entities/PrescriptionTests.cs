@@ -33,6 +33,23 @@ public class PrescriptionTests
             repeatOfPrescriptionId: null, PrescriptionStatus.Acknowledged, DateTime.UtcNow, DateTime.UtcNow,
             rejectionReason: null, OneMedicationWithRepeats(repeats, repeatsUsed));
 
+    private static List<PrescriptionMedication> TwoMedicationsMixedRepeats() =>
+        new()
+        {
+            new PrescriptionMedication(
+                Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food",
+                repeats: 2, repeatsUsed: 0),
+            new PrescriptionMedication(
+                Guid.NewGuid(), Guid.NewGuid(), "10mg", "Once daily", "7 days", 7, "Take in the morning",
+                repeats: 0, repeatsUsed: 0)
+        };
+
+    private static Prescription AcknowledgedPrescriptionWithMixedRepeats() =>
+        Prescription.Rehydrate(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            repeatOfPrescriptionId: null, PrescriptionStatus.Acknowledged, DateTime.UtcNow, DateTime.UtcNow,
+            rejectionReason: null, TwoMedicationsMixedRepeats());
+
     [Fact]
     public void Constructor_WithValidArguments_StartsInCreatedStatus()
     {
@@ -328,6 +345,35 @@ public class PrescriptionTests
         var prescription = AcknowledgedPrescription(repeats: 2, repeatsUsed: 2);
 
         Assert.Throws<InvalidPrescriptionStateException>(() => prescription.RequestRepeatDispense());
+    }
+
+    [Fact]
+    public void RequestRepeatDispense_WhenOnlySomeMedicationsHaveRepeatsRemaining_TransitionsBackToSigned()
+    {
+        var prescription = AcknowledgedPrescriptionWithMixedRepeats();
+
+        prescription.RequestRepeatDispense();
+
+        Assert.Equal(PrescriptionStatus.Signed, prescription.Status);
+    }
+
+    [Fact]
+    public void Acknowledge_AsRepeatDispenseWithMixedRepeats_OnlyIncrementsMedicationsWithRepeatsRemaining()
+    {
+        var prescription = new Prescription(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            TwoMedicationsMixedRepeats());
+        prescription.Sign();
+        prescription.Dispatch();
+        prescription.Acknowledge(isRepeatDispense: false);
+        prescription.RequestRepeatDispense();
+        prescription.Dispatch();
+
+        prescription.Acknowledge(isRepeatDispense: true);
+
+        var medications = prescription.Medications.ToList();
+        Assert.Equal(1, medications[0].RepeatsUsed);
+        Assert.Equal(0, medications[1].RepeatsUsed);
     }
 
     [Fact]

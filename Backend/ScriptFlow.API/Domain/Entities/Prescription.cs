@@ -136,7 +136,9 @@ public sealed class Prescription
 
         if (isRepeatDispense)
         {
-            var updated = _medications.Select(m => m.WithRepeatRecorded()).ToList();
+            var updated = _medications
+                .Select(m => m.HasRepeatsRemaining ? m.WithRepeatRecorded() : m)
+                .ToList();
             _medications.Clear();
             _medications.AddRange(updated);
         }
@@ -184,17 +186,18 @@ public sealed class Prescription
     /// <summary>
     /// Re-enters the same prescription into the dispatch pipeline for a repeat dispense - no new
     /// signature is required, since the original signature already authorizes each medication's
-    /// Repeats count. Requires every medication to still have a repeat remaining (the whole
-    /// script is dispensed together, so it is gated by the medication with the fewest left).
+    /// Repeats count. The whole script is dispensed together as long as at least one medication
+    /// still has a repeat remaining; medications that have exhausted their repeats are carried
+    /// over unchanged (see Acknowledge).
     /// </summary>
     public void RequestRepeatDispense()
     {
         EnsureStatus(PrescriptionStatus.Acknowledged, "request a repeat dispense for");
 
-        if (_medications.Any(m => !m.HasRepeatsRemaining))
+        if (!_medications.Any(m => m.HasRepeatsRemaining))
         {
             throw new InvalidPrescriptionStateException(
-                "Cannot request a repeat dispense: at least one medication has no repeats remaining.");
+                "Cannot request a repeat dispense: no medication has any repeats remaining.");
         }
 
         Status = PrescriptionStatus.Signed;

@@ -52,5 +52,5 @@ public static class MappingExtensions
             prescription.Medications.Select(m => m.ToDto(medicinesById)).ToList(),
             patientsById?.GetValueOrDefault(prescription.PatientId)?.FullName,
             providersById?.GetValueOrDefault(prescription.ProviderId)?.FullName,
-            prescription.Status == PrescriptionStatus.Acknowledged && prescription.Medications.All(m => m.HasRepeatsRemaining));
+            prescription.Status == PrescriptionStatus.Acknowledged && prescription.Medications.Any(m => m.HasRepeatsRemaining));
 }
