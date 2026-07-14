@@ -39,6 +39,8 @@ BEGIN
             pm.Strength,
             pm.IsPrn,
             pm.Notes,
+            pm.Repeats,
+            pm.RepeatsUsed,
             pm.PrescriptionId
         FROM dbo.PrescriptionMedications pm
         WHERE pm.IsDeleted = 0

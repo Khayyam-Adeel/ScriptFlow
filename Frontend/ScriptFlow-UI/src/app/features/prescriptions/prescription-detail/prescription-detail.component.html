@@ -10,6 +10,10 @@
       <app-status-badge [status]="prescription.status" />
     </div>
     <div class="page-actions">
+      <app-button variant="secondary" (clicked)="openPrintPreview()">
+        <app-icon name="file-text" [size]="16" />
+        Print
+      </app-button>
       @if (canEdit) {
         <app-button variant="secondary" [routerLink]="['/prescriptions', prescription.id, 'edit']">
           <app-icon name="pen" [size]="16" />
@@ -37,20 +41,29 @@
     </div>
   </div>
 
-  <ol class="lifecycle-stepper">
+  <div class="lifecycle-cards">
     @for (step of lifecycleSteps(); track step.label; let last = $last) {
-      <li class="lifecycle-step" [class]="'step-' + step.state" [class.is-last]="last">
-        <span class="step-dot">
-          @if (step.state === 'done') {
-            <app-icon name="check" [size]="10" />
-          } @else if (step.state === 'failed') {
-            <app-icon name="x" [size]="10" />
+      <div class="lifecycle-card" [class]="'card-' + step.state">
+        <span class="lifecycle-icon-box" [class.bursting]="burstStep() === step.label">
+          <app-icon [name]="stepIcon(step.label)" [size]="20" />
+          @if (burstStep() === step.label) {
+            <span class="firework">
+              @for (spark of fireworkSparks; track $index) {
+                <span class="spark" [style.--tx.px]="spark.tx" [style.--ty.px]="spark.ty" [style.background]="spark.color"></span>
+              }
+            </span>
           }
         </span>
-        <span class="step-label">{{ step.label }}</span>
-      </li>
+        <div class="lifecycle-text">
+          <span class="lifecycle-label">{{ step.label }}</span>
+          <span class="lifecycle-caption">{{ stepCaption(step.state) }}</span>
+        </div>
+      </div>
+      @if (!last) {
+        <div class="lifecycle-connector" [class.connector-done]="step.state === 'done'"></div>
+      }
     }
-  </ol>
+  </div>
 
   @if (isRejected) {
     <div class="rejection-callout">
@@ -93,6 +106,12 @@
         <a [routerLink]="['/prescriptions', prescription.repeatOfPrescriptionId]">{{ prescription.repeatOfPrescriptionId }}</a>
       </dd>
     }
+    @if (hasAnyRepeats) {
+      <dt><app-icon name="repeat" [size]="16" /> Repeats remaining</dt>
+      <dd>
+        {{ prescription.canRepeatDispense ? 'Available for repeat dispense' : 'No repeats remaining' }}
+      </dd>
+    }
   </dl>
 
   <h2 class="medications-heading">
@@ -110,6 +129,7 @@
         <th>Frequency</th>
         <th>Duration</th>
         <th>Qty</th>
+        <th>Repeats</th>
         <th>Directions</th>
       </tr>
     </thead>
@@ -128,6 +148,7 @@
           <td>{{ medication.frequency }}</td>
           <td>{{ medication.duration }}</td>
           <td>{{ medication.quantity }}</td>
+          <td>{{ medication.repeats > 0 ? medication.repeatsUsed + ' of ' + medication.repeats : '—' }}</td>
           <td>
             {{ medication.directions }}
             @if (medication.notes) {
@@ -140,4 +161,10 @@
   </table>
 } @else {
   <app-spinner />
+}
+
+@if (printPreviewOpen()) {
+  <app-modal title="Prescription print preview" (closed)="closePrintPreview()">
+    <app-prescription-print [prescriptionId]="prescriptionId" (continueClicked)="closePrintPreview()" />
+  </app-modal>
 }

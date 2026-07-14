@@ -12,4 +12,6 @@ public sealed record MedicationDto(
     string? Route,
     string? Strength,
     bool IsPrn,
-    string? Notes);
+    string? Notes,
+    int Repeats,
+    int RepeatsUsed);

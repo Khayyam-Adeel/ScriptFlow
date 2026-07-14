@@ -21,6 +21,8 @@ import { TextFieldComponent } from '../../../shared/components/text-field/text-f
 import { SelectFieldComponent, SelectOption } from '../../../shared/components/select-field/select-field.component';
 import { SpinnerComponent } from '../../../shared/components/spinner/spinner.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
+import { ModalComponent } from '../../../shared/components/modal/modal.component';
+import { PrescriptionPrintComponent } from '../prescription-print/prescription-print.component';
 
 interface MedicationLineGroup {
   medicineId: FormControl<string>;
@@ -33,6 +35,7 @@ interface MedicationLineGroup {
   isPrn: FormControl<boolean>;
   directions: FormControl<string>;
   notes: FormControl<string>;
+  repeats: FormControl<number>;
 }
 
 /** Common administration routes; the backend column is free text, so "Other" isn't needed —
@@ -63,6 +66,7 @@ function buildMedicationLine(): FormGroup<MedicationLineGroup> {
     isPrn: new FormControl(false, { nonNullable: true }),
     directions: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     notes: new FormControl('', { nonNullable: true }),
+    repeats: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
   });
 }
 
@@ -78,6 +82,7 @@ interface MedicationRaw {
   isPrn: boolean;
   directions: string;
   notes: string;
+  repeats: number;
 }
 
 /** One entry rendered in the live "medications so far" timeline beside the form. */
@@ -92,6 +97,7 @@ export interface TimelineEntry {
   quantity: number;
   isPrn: boolean;
   notes: string;
+  repeats: number;
 }
 
 /**
@@ -102,7 +108,17 @@ export interface TimelineEntry {
 @Component({
   selector: 'app-prescription-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, TextFieldComponent, SelectFieldComponent, SpinnerComponent, IconComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    ButtonComponent,
+    TextFieldComponent,
+    SelectFieldComponent,
+    SpinnerComponent,
+    IconComponent,
+    ModalComponent,
+    PrescriptionPrintComponent,
+  ],
   templateUrl: './prescription-form.component.html',
   styleUrl: './prescription-form.component.css',
 })
@@ -121,6 +137,10 @@ export class PrescriptionFormComponent implements OnDestroy {
   readonly isEditMode = this.editingId !== null;
   readonly loading = signal(this.isEditMode);
   readonly submitting = signal(false);
+
+  /** Set once a prescription is created, so the print preview modal opens before the
+   * prescriber is taken to the detail page where they'd sign it. */
+  readonly createdPrescriptionId = signal<string | null>(null);
 
   readonly providerOptions = signal<SelectOption[]>([]);
   readonly practiceLocationOptions = signal<SelectOption[]>([]);
@@ -146,6 +166,7 @@ export class PrescriptionFormComponent implements OnDestroy {
         quantity: line.quantity,
         isPrn: line.isPrn,
         notes: line.notes,
+        repeats: line.repeats,
       }))
       .filter((entry) => !!entry.medicineName);
   });
@@ -241,6 +262,7 @@ export class PrescriptionFormComponent implements OnDestroy {
               isPrn: medication.isPrn,
               directions: medication.directions,
               notes: medication.notes ?? '',
+              repeats: medication.repeats,
             });
             this.medications.push(line);
           }
@@ -304,8 +326,17 @@ export class PrescriptionFormComponent implements OnDestroy {
         .pipe(finalize(() => this.submitting.set(false)))
         .subscribe((prescription) => {
           this.notifications.success(`Prescription ${prescription.scid} created.`);
-          this.router.navigate(['/prescriptions', prescription.id]);
+          // Show the print preview before handing off to the detail page (where signing
+          // happens) - goToDetail() below navigates once the prescriber closes it.
+          this.createdPrescriptionId.set(prescription.id);
         });
+    }
+  }
+
+  goToDetail(): void {
+    const id = this.createdPrescriptionId();
+    if (id) {
+      this.router.navigate(['/prescriptions', id]);
     }
   }
 

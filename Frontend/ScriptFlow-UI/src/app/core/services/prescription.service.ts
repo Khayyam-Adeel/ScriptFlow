@@ -5,9 +5,11 @@ import { environment } from '../../../environments/environment';
 import { PrescriptionStatus } from '../../shared/models/prescription-status';
 import {
   CreatePrescriptionRequest,
+  LocationVolume,
   Prescription,
   PrescriptionDailyVolume,
   PrescriptionStatusCount,
+  RejectionRate,
   UpdatePrescriptionRequest,
 } from '../models/prescription.model';
 
@@ -69,5 +71,20 @@ export class PrescriptionService {
    * GetPrescriptionDailyVolumeQueryHandler for the fixed window. */
   getDailyVolume(): Observable<PrescriptionDailyVolume[]> {
     return this.http.get<PrescriptionDailyVolume[]>(`${this.baseUrl}/daily-volume`);
+  }
+
+  /** Admin overview chart: total prescription volume per practice location. */
+  getVolumeByLocation(): Observable<LocationVolume[]> {
+    return this.http.get<LocationVolume[]>(`${this.baseUrl}/reporting/volume-by-location`);
+  }
+
+  /** Admin overview chart: rejection rate of finalized prescriptions per practice location. */
+  getRejectionRateByLocation(): Observable<RejectionRate[]> {
+    return this.http.get<RejectionRate[]>(`${this.baseUrl}/reporting/rejection-rate-by-location`);
+  }
+
+  /** Admin overview chart: rejection rate of finalized prescriptions per provider. */
+  getRejectionRateByProvider(): Observable<RejectionRate[]> {
+    return this.http.get<RejectionRate[]>(`${this.baseUrl}/reporting/rejection-rate-by-provider`);
   }
 }

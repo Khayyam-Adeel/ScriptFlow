@@ -26,9 +26,20 @@ public sealed class PrescriptionMedication
     /// <summary>Optional free-text note for the pharmacist/patient; null when not specified.</summary>
     public string? Notes { get; }
 
+    /// <summary>Number of additional times this medication may be dispensed under the same
+    /// prescriber signature, beyond the initial dispense (e.g. Repeats = 3 means 4 total fills).</summary>
+    public int Repeats { get; }
+
+    /// <summary>Number of repeat dispenses already recorded against <see cref="Repeats"/>.</summary>
+    public int RepeatsUsed { get; }
+
+    /// <summary>Whether the pharmacy can still dispense this medication again without a new signature.</summary>
+    public bool HasRepeatsRemaining => RepeatsUsed < Repeats;
+
     public PrescriptionMedication(
         Guid id, Guid medicineId, string takeValue, string frequency, string duration, int quantity, string directions,
-        string? route = null, string? strength = null, bool isPrn = false, string? notes = null)
+        string? route = null, string? strength = null, bool isPrn = false, string? notes = null,
+        int repeats = 0, int repeatsUsed = 0)
     {
         if (medicineId == Guid.Empty)
         {
@@ -60,6 +71,16 @@ public sealed class PrescriptionMedication
             throw new DomainException("Medication directions are required.");
         }
 
+        if (repeats < 0)
+        {
+            throw new DomainException("Medication repeats cannot be negative.");
+        }
+
+        if (repeatsUsed < 0 || repeatsUsed > repeats)
+        {
+            throw new DomainException("Medication repeats used must be between zero and the total repeats.");
+        }
+
         Id = id;
         MedicineId = medicineId;
         TakeValue = takeValue;
@@ -72,5 +93,11 @@ public sealed class PrescriptionMedication
         Strength = string.IsNullOrWhiteSpace(strength) ? null : strength.Trim();
         IsPrn = isPrn;
         Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        Repeats = repeats;
+        RepeatsUsed = repeatsUsed;
     }
+
+    /// <summary>Returns a copy with one more repeat dispense recorded.</summary>
+    public PrescriptionMedication WithRepeatRecorded() =>
+        new(Id, MedicineId, TakeValue, Frequency, Duration, Quantity, Directions, Route, Strength, IsPrn, Notes, Repeats, RepeatsUsed + 1);
 }

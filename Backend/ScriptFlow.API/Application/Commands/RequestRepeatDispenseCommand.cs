@@ -3,4 +3,4 @@ using ScriptFlow.API.Application.DTOs;
 
 namespace ScriptFlow.API.Application.Commands;
 
-public sealed record RepeatPrescriptionCommand(Guid PrescriptionId) : IRequest<PrescriptionDto>;
+public sealed record RequestRepeatDispenseCommand(Guid PrescriptionId) : IRequest<PrescriptionDto>;

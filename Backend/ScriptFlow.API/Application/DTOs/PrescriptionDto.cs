@@ -13,4 +13,9 @@ public sealed record PrescriptionDto(
     DateTime CreatedAtUtc,
     DateTime? SignedAtUtc,
     string? RejectionReason,
-    IReadOnlyCollection<MedicationDto> Medications);
+    IReadOnlyCollection<MedicationDto> Medications,
+    // Populated only where the handler already has a cheap batch lookup on hand (the
+    // prescription list grid) - null elsewhere rather than adding a lookup nothing else needs.
+    string? PatientName = null,
+    string? ProviderName = null,
+    bool CanRepeatDispense = false);

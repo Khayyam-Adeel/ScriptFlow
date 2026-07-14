@@ -111,7 +111,7 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
                 header,
                 medicationsByPrescriptionId[header.Id].Select(m => new PrescriptionMedicationRow(
                     m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
-                    m.Route, m.Strength, m.IsPrn, m.Notes))))
+                    m.Route, m.Strength, m.IsPrn, m.Notes, m.Repeats, m.RepeatsUsed))))
             .ToList();
     }
 
@@ -166,15 +166,48 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
                 header,
                 medicationsByPrescriptionId[header.Id].Select(m => new PrescriptionMedicationRow(
                     m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
-                    m.Route, m.Strength, m.IsPrn, m.Notes))))
+                    m.Route, m.Strength, m.IsPrn, m.Notes, m.Repeats, m.RepeatsUsed))))
             .ToList();
+    }
+
+    public async Task<IReadOnlyCollection<LocationVolumeDto>> GetVolumeByLocationAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var rows = await connection.QueryAsync<LocationVolumeRow>(new CommandDefinition(
+            "Prescription.usp_Reporting_VolumeByLocation",
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken));
+
+        return rows.Select(r => new LocationVolumeDto(r.LocationName, r.Cnt)).ToList();
+    }
+
+    public async Task<IReadOnlyCollection<RejectionRateDto>> GetRejectionRateByLocationAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var rows = await connection.QueryAsync<RejectionRateDto>(new CommandDefinition(
+            "Prescription.usp_Reporting_RejectionRateByLocation",
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken));
+
+        return rows.ToList();
+    }
+
+    public async Task<IReadOnlyCollection<RejectionRateDto>> GetRejectionRateByProviderAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var rows = await connection.QueryAsync<RejectionRateDto>(new CommandDefinition(
+            "Prescription.usp_Reporting_RejectionRateByProvider",
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken));
+
+        return rows.ToList();
     }
 
     private static Prescription ToEntity(PrescriptionHeaderRow header, IEnumerable<PrescriptionMedicationRow> medicationRows)
     {
         var medications = medicationRows.Select(m =>
             new PrescriptionMedication(m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
-                m.Route, m.Strength, m.IsPrn, m.Notes));
+                m.Route, m.Strength, m.IsPrn, m.Notes, m.Repeats, m.RepeatsUsed));
 
         return Prescription.Rehydrate(
             header.Id,
@@ -205,6 +238,8 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
         table.Columns.Add("Strength", typeof(string));
         table.Columns.Add("IsPrn", typeof(bool));
         table.Columns.Add("Notes", typeof(string));
+        table.Columns.Add("Repeats", typeof(int));
+        table.Columns.Add("RepeatsUsed", typeof(int));
 
         foreach (var medication in medications)
         {
@@ -212,7 +247,8 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
                 medication.Id, medication.MedicineId, medication.TakeValue,
                 medication.Frequency, medication.Duration, medication.Quantity, medication.Directions,
                 (object?)medication.Route ?? DBNull.Value, (object?)medication.Strength ?? DBNull.Value,
-                medication.IsPrn, (object?)medication.Notes ?? DBNull.Value);
+                medication.IsPrn, (object?)medication.Notes ?? DBNull.Value,
+                medication.Repeats, medication.RepeatsUsed);
         }
 
         return table;
@@ -225,13 +261,15 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
 
     private sealed record PrescriptionMedicationRow(
         Guid Id, Guid MedicineId, string TakeValue, string Frequency, string Duration, int Quantity, string Directions,
-        string? Route, string? Strength, bool IsPrn, string? Notes);
+        string? Route, string? Strength, bool IsPrn, string? Notes, int Repeats, int RepeatsUsed);
 
     private sealed record PrescriptionMedicationListRow(
         Guid Id, Guid MedicineId, string TakeValue, string Frequency, string Duration, int Quantity, string Directions,
-        string? Route, string? Strength, bool IsPrn, string? Notes, Guid PrescriptionId);
+        string? Route, string? Strength, bool IsPrn, string? Notes, int Repeats, int RepeatsUsed, Guid PrescriptionId);
 
     private sealed record StatusCountRow(byte Status, int Cnt);
 
     private sealed record DailyVolumeRow(DateTime CreatedDate, int Cnt);
+
+    private sealed record LocationVolumeRow(string LocationName, int Cnt);
 }

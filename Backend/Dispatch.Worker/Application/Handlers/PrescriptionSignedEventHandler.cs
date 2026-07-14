@@ -56,7 +56,8 @@ public sealed class PrescriptionSignedEventHandler
             Scid = signedEvent.Scid,
             DispatchedAtUtc = DateTime.UtcNow,
             Status = PrescriptionStatus.Dispatched,
-            CorrelationId = signedEvent.CorrelationId
+            CorrelationId = signedEvent.CorrelationId,
+            IsRepeatDispense = signedEvent.IsRepeatDispense
         }, cancellationToken);
 
         var request = new PharmacyDispatchRequest
@@ -79,7 +80,8 @@ public sealed class PrescriptionSignedEventHandler
                 PharmacyReference = response.PharmacyReference!.Value,
                 AcknowledgedAtUtc = DateTime.UtcNow,
                 Status = PrescriptionStatus.Acknowledged,
-                CorrelationId = signedEvent.CorrelationId
+                CorrelationId = signedEvent.CorrelationId,
+                IsRepeatDispense = signedEvent.IsRepeatDispense
             }, cancellationToken);
         }
         else
@@ -91,12 +93,14 @@ public sealed class PrescriptionSignedEventHandler
                 RejectionReason = response.RejectionReason!,
                 RejectedAtUtc = DateTime.UtcNow,
                 Status = PrescriptionStatus.Rejected,
-                CorrelationId = signedEvent.CorrelationId
+                CorrelationId = signedEvent.CorrelationId,
+                IsRepeatDispense = signedEvent.IsRepeatDispense
             }, cancellationToken);
         }
 
         // Only mark processed once the outcome has actually been published - if publishing
         // itself throws, redelivery should retry the whole thing, not skip it as done.
-        await _processedMessages.MarkProcessedAsync(signedEvent.EventId, cancellationToken);
+        await _processedMessages.MarkProcessedAsync(
+            signedEvent.EventId, nameof(PrescriptionSignedEvent), signedEvent.PrescriptionId, cancellationToken);
     }
 }

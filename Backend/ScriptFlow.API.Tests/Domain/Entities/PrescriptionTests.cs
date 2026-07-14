@@ -19,6 +19,20 @@ public class PrescriptionTests
     private static Prescription NewPrescription() =>
         new(Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), OneMedication());
 
+    private static List<PrescriptionMedication> OneMedicationWithRepeats(int repeats, int repeatsUsed = 0) =>
+        new()
+        {
+            new PrescriptionMedication(
+                Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food",
+                repeats: repeats, repeatsUsed: repeatsUsed)
+        };
+
+    private static Prescription AcknowledgedPrescription(int repeats, int repeatsUsed = 0) =>
+        Prescription.Rehydrate(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            repeatOfPrescriptionId: null, PrescriptionStatus.Acknowledged, DateTime.UtcNow, DateTime.UtcNow,
+            rejectionReason: null, OneMedicationWithRepeats(repeats, repeatsUsed));
+
     [Fact]
     public void Constructor_WithValidArguments_StartsInCreatedStatus()
     {
@@ -149,6 +163,34 @@ public class PrescriptionTests
     }
 
     [Fact]
+    public void Acknowledge_AsFirstDispense_DoesNotRecordARepeat()
+    {
+        var prescription = new Prescription(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            OneMedicationWithRepeats(repeats: 3));
+        prescription.Sign();
+        prescription.Dispatch();
+
+        prescription.Acknowledge(isRepeatDispense: false);
+
+        Assert.Equal(0, prescription.Medications.Single().RepeatsUsed);
+    }
+
+    [Fact]
+    public void Acknowledge_AsRepeatDispense_IncrementsRepeatsUsed()
+    {
+        var prescription = new Prescription(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            OneMedicationWithRepeats(repeats: 3));
+        prescription.Sign();
+        prescription.Dispatch();
+
+        prescription.Acknowledge(isRepeatDispense: true);
+
+        Assert.Equal(1, prescription.Medications.Single().RepeatsUsed);
+    }
+
+    [Fact]
     public void Acknowledge_WhileCreated_ThrowsInvalidPrescriptionStateException()
     {
         var prescription = NewPrescription();
@@ -176,6 +218,22 @@ public class PrescriptionTests
 
         Assert.Equal(PrescriptionStatus.Rejected, prescription.Status);
         Assert.Equal("OutOfStock", prescription.RejectionReason);
+    }
+
+    [Fact]
+    public void Reject_AsRepeatDispense_RevertsToAcknowledgedInsteadOfTerminal()
+    {
+        var prescription = new Prescription(
+            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            OneMedicationWithRepeats(repeats: 3));
+        prescription.Sign();
+        prescription.Dispatch();
+
+        prescription.Reject("OutOfStock", isRepeatDispense: true);
+
+        Assert.Equal(PrescriptionStatus.Acknowledged, prescription.Status);
+        Assert.Null(prescription.RejectionReason);
+        Assert.Equal(0, prescription.Medications.Single().RepeatsUsed);
     }
 
     [Fact]
@@ -238,43 +296,38 @@ public class PrescriptionTests
         Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Expire());
     }
 
-    [Theory]
-    [InlineData(PrescriptionStatus.Signed)]
-    [InlineData(PrescriptionStatus.Dispatched)]
-    [InlineData(PrescriptionStatus.Acknowledged)]
-    public void Repeat_FromAllowedStatus_CreatesNewPrescriptionLinkedToOriginal(PrescriptionStatus status)
+    [Fact]
+    public void RequestRepeatDispense_WhileAcknowledgedWithRepeatsRemaining_TransitionsBackToSigned()
     {
-        var original = Prescription.Rehydrate(
-            Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            repeatOfPrescriptionId: null, status, DateTime.UtcNow, DateTime.UtcNow,
-            rejectionReason: null, OneMedication());
+        var prescription = AcknowledgedPrescription(repeats: 3, repeatsUsed: 1);
 
-        var newId = Guid.NewGuid();
-        var newScid = new Scid("9AAAAABBBBB");
+        prescription.RequestRepeatDispense();
 
-        var repeat = original.Repeat(newId, newScid);
-
-        Assert.Equal(newId, repeat.Id);
-        Assert.Equal(original.Id, repeat.RepeatOfPrescriptionId);
-        Assert.Equal(original.PatientId, repeat.PatientId);
-        Assert.Equal(original.ProviderId, repeat.ProviderId);
-        Assert.Equal(original.PracticeLocationId, repeat.PracticeLocationId);
-        Assert.Equal(PrescriptionStatus.Created, repeat.Status);
-        Assert.Single(repeat.Medications);
-        Assert.NotEqual(original.Medications.Single().Id, repeat.Medications.Single().Id);
+        Assert.Equal(PrescriptionStatus.Signed, prescription.Status);
     }
 
     [Theory]
     [InlineData(PrescriptionStatus.Created)]
+    [InlineData(PrescriptionStatus.Signed)]
+    [InlineData(PrescriptionStatus.Dispatched)]
     [InlineData(PrescriptionStatus.Rejected)]
-    public void Repeat_FromDisallowedStatus_ThrowsInvalidPrescriptionStateException(PrescriptionStatus status)
+    [InlineData(PrescriptionStatus.Expired)]
+    public void RequestRepeatDispense_FromDisallowedStatus_ThrowsInvalidPrescriptionStateException(PrescriptionStatus status)
     {
         var prescription = Prescription.Rehydrate(
             Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
             repeatOfPrescriptionId: null, status, DateTime.UtcNow, signedAtUtc: null,
-            rejectionReason: null, OneMedication());
+            rejectionReason: null, OneMedicationWithRepeats(repeats: 3));
 
-        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Repeat(Guid.NewGuid(), new Scid("9AAAAABBBBB")));
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.RequestRepeatDispense());
+    }
+
+    [Fact]
+    public void RequestRepeatDispense_WhenNoRepeatsRemaining_ThrowsInvalidPrescriptionStateException()
+    {
+        var prescription = AcknowledgedPrescription(repeats: 2, repeatsUsed: 2);
+
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.RequestRepeatDispense());
     }
 
     [Fact]

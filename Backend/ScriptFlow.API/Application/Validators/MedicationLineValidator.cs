@@ -19,5 +19,6 @@ public sealed class MedicationLineValidator : AbstractValidator<MedicationLine>
         RuleFor(x => x.Route).MaximumLength(100);
         RuleFor(x => x.Strength).MaximumLength(100);
         RuleFor(x => x.Notes).MaximumLength(1000);
+        RuleFor(x => x.Repeats).GreaterThanOrEqualTo(0);
     }
 }

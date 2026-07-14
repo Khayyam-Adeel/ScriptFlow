@@ -11,4 +11,5 @@ public sealed class PrescriptionDispatchedEvent : IntegrationEvent
     public required string Scid { get; init; }
     public required DateTime DispatchedAtUtc { get; init; }
     public required PrescriptionStatus Status { get; init; }
+    public bool IsRepeatDispense { get; init; }
 }

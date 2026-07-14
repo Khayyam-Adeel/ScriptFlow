@@ -45,16 +45,19 @@ public sealed class PrescriptionRejectedEventHandler
         var prescription = await _prescriptions.GetByIdAsync(rejectedEvent.PrescriptionId, cancellationToken)
             ?? throw new EntityNotFoundException("Prescription", rejectedEvent.PrescriptionId);
 
-        prescription.Reject(rejectedEvent.RejectionReason);
+        prescription.Reject(rejectedEvent.RejectionReason, rejectedEvent.IsRepeatDispense);
         await _prescriptions.UpdateAsync(prescription, cancellationToken);
 
+        // A first-time rejection lands on Rejected (terminal); a rejected repeat-dispense
+        // attempt reverts to Acknowledged instead - reflect whatever the domain actually did.
         await _eventPublisher.PublishAsync(new PrescriptionStatusChangedEvent
         {
             PrescriptionId = prescription.Id,
-            Status = PrescriptionStatus.Rejected,
+            Status = prescription.Status,
             CorrelationId = rejectedEvent.CorrelationId
         }, cancellationToken);
 
-        await _processedMessages.MarkProcessedAsync(rejectedEvent.EventId, cancellationToken);
+        await _processedMessages.MarkProcessedAsync(
+            rejectedEvent.EventId, nameof(PrescriptionRejectedEvent), rejectedEvent.PrescriptionId, cancellationToken);
     }
 }

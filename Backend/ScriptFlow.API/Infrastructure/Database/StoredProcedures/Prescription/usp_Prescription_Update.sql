@@ -31,10 +31,10 @@ BEGIN
 
         INSERT INTO dbo.PrescriptionMedications
             (Id, PrescriptionId, MedicineId, TakeValue, Frequency, Duration, Quantity, Directions,
-             Route, Strength, IsPrn, Notes, InsertedBy)
+             Route, Strength, IsPrn, Notes, Repeats, RepeatsUsed, InsertedBy)
         SELECT
             m.Id, @Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
-            m.Route, m.Strength, m.IsPrn, m.Notes, @UpdatedBy
+            m.Route, m.Strength, m.IsPrn, m.Notes, m.Repeats, m.RepeatsUsed, @UpdatedBy
         FROM @Medications m;
 
         COMMIT TRANSACTION;

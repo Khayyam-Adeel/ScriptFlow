@@ -10,14 +10,20 @@ using Shared.Infrastructure.Messaging;
 
 namespace ScriptFlow.API.Application.Handlers;
 
-public sealed class SignPrescriptionCommandHandler : IRequestHandler<SignPrescriptionCommand, PrescriptionDto>
+/// <summary>
+/// Re-enters an already-signed, pharmacy-acknowledged prescription into the same
+/// Sign -&gt; Dispatch -&gt; Acknowledge/Reject pipeline for a repeat dispense, instead of
+/// creating a new prescription. See Prescription.RequestRepeatDispense for the eligibility
+/// rule (all medications must still have a repeat remaining).
+/// </summary>
+public sealed class RequestRepeatDispenseCommandHandler : IRequestHandler<RequestRepeatDispenseCommand, PrescriptionDto>
 {
     private readonly IPrescriptionRepository _prescriptions;
     private readonly IMedicineRepository _medicines;
     private readonly IEventPublisher _eventPublisher;
     private readonly ICorrelationIdAccessor _correlationIdAccessor;
 
-    public SignPrescriptionCommandHandler(
+    public RequestRepeatDispenseCommandHandler(
         IPrescriptionRepository prescriptions,
         IMedicineRepository medicines,
         IEventPublisher eventPublisher,
@@ -29,13 +35,13 @@ public sealed class SignPrescriptionCommandHandler : IRequestHandler<SignPrescri
         _correlationIdAccessor = correlationIdAccessor;
     }
 
-    public async Task<PrescriptionDto> Handle(SignPrescriptionCommand request, CancellationToken cancellationToken)
+    public async Task<PrescriptionDto> Handle(RequestRepeatDispenseCommand request, CancellationToken cancellationToken)
     {
         var prescription = await _prescriptions.GetByIdAsync(request.PrescriptionId, cancellationToken)
             ?? throw new EntityNotFoundException("Prescription", request.PrescriptionId);
 
-        // Throws InvalidPrescriptionStateException (-> 409) if it isn't currently Created.
-        prescription.Sign();
+        // Throws InvalidPrescriptionStateException (-> 409) unless Acknowledged with repeats remaining.
+        prescription.RequestRepeatDispense();
         await _prescriptions.UpdateAsync(prescription, cancellationToken);
 
         var medicinesById = await _medicines.GetManyAsync(prescription.Medications.Select(m => m.MedicineId), cancellationToken);
@@ -48,7 +54,7 @@ public sealed class SignPrescriptionCommandHandler : IRequestHandler<SignPrescri
             SignedAtUtc = prescription.SignedAtUtc!.Value,
             Status = prescription.Status,
             CorrelationId = _correlationIdAccessor.CorrelationId,
-            IsRepeatDispense = false
+            IsRepeatDispense = true
         }, cancellationToken);
 
         return prescription.ToDto(medicinesById);

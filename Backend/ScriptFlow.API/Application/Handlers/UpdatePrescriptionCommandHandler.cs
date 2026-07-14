@@ -34,7 +34,7 @@ public sealed class UpdatePrescriptionCommandHandler : IRequestHandler<UpdatePre
 
         var medications = request.Medications.Select(m => new PrescriptionMedication(
             Guid.NewGuid(), m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
-            m.Route, m.Strength, m.IsPrn, m.Notes));
+            m.Route, m.Strength, m.IsPrn, m.Notes, m.Repeats));
 
         // Throws InvalidPrescriptionStateException (-> 409) if the prescription is no longer in Created status.
         prescription.UpdateMedications(medications);

@@ -126,6 +126,8 @@ CREATE TABLE [Admin].[tblPracticeLocations] (
     [Name]         NVARCHAR (200)   NOT NULL,
     [HpiNo]        CHAR (5)         NOT NULL,
     [HpiExtension] CHAR (1)         NOT NULL,
+    [Address]      NVARCHAR (500)   NOT NULL,
+    [Phone]        NVARCHAR (20)    NOT NULL,
     [IsActive]     BIT              NOT NULL,
     [IsDeleted]    BIT              NOT NULL,
     [InsertedAt]   DATETIME2 (3)    NOT NULL,
@@ -318,6 +320,9 @@ CREATE TABLE [Profile].[tblProviders] (
     [Type]               TINYINT          NOT NULL,
     [NzmcNo]             NVARCHAR (20)    NOT NULL,
     [PracticeLocationId] UNIQUEIDENTIFIER NOT NULL,
+    [Email]              NVARCHAR (200)   NOT NULL,
+    [PhoneNumber]        NVARCHAR (20)    NOT NULL,
+    [Qualification]      NVARCHAR (200)   NOT NULL,
     [IsActive]           BIT              NOT NULL,
     [IsDeleted]          BIT              NOT NULL,
     [InsertedAt]         DATETIME2 (3)    NOT NULL,
@@ -344,12 +349,16 @@ PRINT N'Creating Table [Profile].[tblPatients]...';
 
 GO
 CREATE TABLE [Profile].[tblPatients] (
-    [Id]         UNIQUEIDENTIFIER NOT NULL,
-    [FirstName]  NVARCHAR (100)   NOT NULL,
-    [LastName]   NVARCHAR (100)   NOT NULL,
-    [Address]    NVARCHAR (500)   NOT NULL,
-    [Nhi]        CHAR (7)         NOT NULL,
-    [IsActive]   BIT              NOT NULL,
+    [Id]           UNIQUEIDENTIFIER NOT NULL,
+    [FirstName]    NVARCHAR (100)   NOT NULL,
+    [LastName]     NVARCHAR (100)   NOT NULL,
+    [Address]      NVARCHAR (500)   NOT NULL,
+    [Nhi]          CHAR (7)         NOT NULL,
+    [DateOfBirth]  DATE             NOT NULL,
+    [Gender]       TINYINT          NOT NULL,
+    [PhoneNumber]  NVARCHAR (20)    NOT NULL,
+    [Email]        NVARCHAR (200)   NOT NULL,
+    [IsActive]     BIT              NOT NULL,
     [IsDeleted]  BIT              NOT NULL,
     [InsertedAt] DATETIME2 (3)    NOT NULL,
     [UpdatedAt]  DATETIME2 (3)    NULL,
@@ -399,6 +408,8 @@ CREATE TABLE [dbo].[PrescriptionMedications] (
     [Strength]       NVARCHAR (100)   NULL,
     [IsPrn]          BIT              NOT NULL,
     [Notes]          NVARCHAR (1000)  NULL,
+    [Repeats]        INT              NOT NULL,
+    [RepeatsUsed]    INT              NOT NULL,
     [IsActive]       BIT              NOT NULL,
     [IsDeleted]      BIT              NOT NULL,
     [InsertedAt]     DATETIME2 (3)    NOT NULL,
@@ -765,6 +776,24 @@ ALTER TABLE [dbo].[PrescriptionMedications]
 
 
 GO
+PRINT N'Creating Default Constraint [dbo].[DF_PrescriptionMedications_Repeats]...';
+
+
+GO
+ALTER TABLE [dbo].[PrescriptionMedications]
+    ADD CONSTRAINT [DF_PrescriptionMedications_Repeats] DEFAULT ((0)) FOR [Repeats];
+
+
+GO
+PRINT N'Creating Default Constraint [dbo].[DF_PrescriptionMedications_RepeatsUsed]...';
+
+
+GO
+ALTER TABLE [dbo].[PrescriptionMedications]
+    ADD CONSTRAINT [DF_PrescriptionMedications_RepeatsUsed] DEFAULT ((0)) FOR [RepeatsUsed];
+
+
+GO
 PRINT N'Creating Default Constraint [dbo].[DF_PrescriptionMedications_Id]...';
 
 
@@ -1089,6 +1118,15 @@ ALTER TABLE [Profile].[tblPatients]
 
 
 GO
+PRINT N'Creating Check Constraint [Profile].[CK_Patients_Gender]...';
+
+
+GO
+ALTER TABLE [Profile].[tblPatients]
+    ADD CONSTRAINT [CK_Patients_Gender] CHECK ([Gender]=(2) OR [Gender]=(1) OR [Gender]=(0));
+
+
+GO
 PRINT N'Creating Check Constraint [Profile].[CK_Users_Role]...';
 
 
@@ -1104,5 +1142,14 @@ PRINT N'Creating Check Constraint [dbo].[CK_PrescriptionMedications_Quantity]...
 GO
 ALTER TABLE [dbo].[PrescriptionMedications]
     ADD CONSTRAINT [CK_PrescriptionMedications_Quantity] CHECK ([Quantity]>(0));
+
+
+GO
+PRINT N'Creating Check Constraint [dbo].[CK_PrescriptionMedications_Repeats]...';
+
+
+GO
+ALTER TABLE [dbo].[PrescriptionMedications]
+    ADD CONSTRAINT [CK_PrescriptionMedications_Repeats] CHECK ([Repeats]>=(0) AND [RepeatsUsed]>=(0) AND [RepeatsUsed]<=[Repeats]);
 
 

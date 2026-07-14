@@ -14,6 +14,8 @@ export interface Medication {
   strength: string | null;
   isPrn: boolean;
   notes: string | null;
+  repeats: number;
+  repeatsUsed: number;
 }
 
 // Mirrors ScriptFlow.API.Application.DTOs.MedicationLine — one medication line submitted by the client.
@@ -28,6 +30,7 @@ export interface MedicationLine {
   strength?: string | null;
   isPrn?: boolean;
   notes?: string | null;
+  repeats?: number;
 }
 
 // Mirrors ScriptFlow.API.Application.DTOs.PrescriptionDto
@@ -43,6 +46,12 @@ export interface Prescription {
   signedAtUtc: string | null;
   rejectionReason: string | null;
   medications: Medication[];
+  // Only populated by list() - the grid's batch lookup. Null from getById()/create()/etc.,
+  // which don't build that lookup since the detail page already fetches patient/provider
+  // separately.
+  patientName: string | null;
+  providerName: string | null;
+  canRepeatDispense: boolean;
 }
 
 // Mirrors ScriptFlow.API.Application.Commands.CreatePrescriptionCommand
@@ -68,4 +77,19 @@ export interface PrescriptionStatusCount {
 export interface PrescriptionDailyVolume {
   date: string;
   count: number;
+}
+
+// Mirrors ScriptFlow.API.Application.DTOs.LocationVolumeDto
+export interface LocationVolume {
+  locationName: string;
+  count: number;
+}
+
+// Mirrors ScriptFlow.API.Application.DTOs.RejectionRateDto - shared shape for the by-location
+// and by-provider rejection rate reports.
+export interface RejectionRate {
+  name: string;
+  rejectedCount: number;
+  finalizedCount: number;
+  rejectionRatePct: number;
 }

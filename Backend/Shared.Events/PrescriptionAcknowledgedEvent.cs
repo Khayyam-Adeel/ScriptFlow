@@ -10,4 +10,5 @@ public sealed class PrescriptionAcknowledgedEvent : IntegrationEvent
     public required Guid PharmacyReference { get; init; }
     public required DateTime AcknowledgedAtUtc { get; init; }
     public required PrescriptionStatus Status { get; init; }
+    public bool IsRepeatDispense { get; init; }
 }

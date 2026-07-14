@@ -33,7 +33,9 @@ BEGIN
             Route,
             Strength,
             IsPrn,
-            Notes
+            Notes,
+            Repeats,
+            RepeatsUsed
         FROM dbo.PrescriptionMedications
         WHERE PrescriptionId = @Id
           AND IsDeleted = 0;

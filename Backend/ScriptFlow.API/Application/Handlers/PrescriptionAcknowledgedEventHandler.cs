@@ -45,7 +45,7 @@ public sealed class PrescriptionAcknowledgedEventHandler
         var prescription = await _prescriptions.GetByIdAsync(acknowledgedEvent.PrescriptionId, cancellationToken)
             ?? throw new EntityNotFoundException("Prescription", acknowledgedEvent.PrescriptionId);
 
-        prescription.Acknowledge();
+        prescription.Acknowledge(acknowledgedEvent.IsRepeatDispense);
         await _prescriptions.UpdateAsync(prescription, cancellationToken);
 
         await _eventPublisher.PublishAsync(new PrescriptionStatusChangedEvent
@@ -55,6 +55,7 @@ public sealed class PrescriptionAcknowledgedEventHandler
             CorrelationId = acknowledgedEvent.CorrelationId
         }, cancellationToken);
 
-        await _processedMessages.MarkProcessedAsync(acknowledgedEvent.EventId, cancellationToken);
+        await _processedMessages.MarkProcessedAsync(
+            acknowledgedEvent.EventId, nameof(PrescriptionAcknowledgedEvent), acknowledgedEvent.PrescriptionId, cancellationToken);
     }
 }

@@ -111,6 +111,7 @@
               <app-text-field label="Frequency" [control]="line.controls.frequency" placeholder="e.g. BD" />
               <app-text-field label="Duration" [control]="line.controls.duration" placeholder="e.g. 7 days" />
               <app-text-field label="Quantity" type="number" [control]="line.controls.quantity" />
+              <app-text-field label="Repeats" type="number" [control]="line.controls.repeats" />
             </div>
             <label class="prn-toggle">
               <input type="checkbox" [formControl]="line.controls.isPrn" />
@@ -173,6 +174,9 @@
                       <span>· {{ entry.duration }}</span>
                     }
                     <span class="timeline-qty">Qty {{ entry.quantity }}</span>
+                    @if (entry.repeats > 0) {
+                      <span class="timeline-tag">Repeats {{ entry.repeats }}</span>
+                    }
                   </div>
                   @if (entry.notes) {
                     <p class="timeline-notes">{{ entry.notes }}</p>
@@ -185,4 +189,10 @@
       </div>
     </aside>
   </form>
+}
+
+@if (createdPrescriptionId(); as prescriptionId) {
+  <app-modal title="Prescription created" (closed)="goToDetail()">
+    <app-prescription-print [prescriptionId]="prescriptionId" (continueClicked)="goToDetail()" />
+  </app-modal>
 }

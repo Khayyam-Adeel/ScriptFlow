@@ -1,7 +1,3 @@
--- Covers both AddAsync call sites (CreatePrescriptionCommandHandler and
--- RepeatPrescriptionCommandHandler): a repeat is just a new prescription row with
--- RepeatOfPrescriptionId set and cloned medications, already shaped that way by
--- Prescription.Repeat() in the domain layer before this SP is called.
 CREATE OR ALTER PROCEDURE Prescription.usp_Prescription_Create
     @Id                     UNIQUEIDENTIFIER,
     @Scid                   CHAR(11),
@@ -24,10 +20,10 @@ BEGIN
 
         INSERT INTO dbo.PrescriptionMedications
             (Id, PrescriptionId, MedicineId, TakeValue, Frequency, Duration, Quantity, Directions,
-             Route, Strength, IsPrn, Notes, InsertedBy)
+             Route, Strength, IsPrn, Notes, Repeats, RepeatsUsed, InsertedBy)
         SELECT
             m.Id, @Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
-            m.Route, m.Strength, m.IsPrn, m.Notes, @InsertedBy
+            m.Route, m.Strength, m.IsPrn, m.Notes, m.Repeats, m.RepeatsUsed, @InsertedBy
         FROM @Medications m;
 
         COMMIT TRANSACTION;

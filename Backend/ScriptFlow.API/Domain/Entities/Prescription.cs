@@ -8,7 +8,8 @@ namespace ScriptFlow.API.Domain.Entities;
 /// Aggregate root for a prescription. Owns the medication list and the lifecycle state
 /// machine: Created -&gt; Signed -&gt; Dispatched -&gt; Acknowledged/Rejected, with Expired
 /// reachable from any non-terminal state (Created, Signed, or Dispatched). This API drives
-/// Created -&gt; Signed directly (SignPrescriptionCommandHandler) and spawns repeats; Dispatched
+/// Created -&gt; Signed directly (SignPrescriptionCommandHandler) and Acknowledged -&gt; Signed
+/// again for a repeat dispense (RequestRepeatDispenseCommandHandler); Dispatched
 /// and Acknowledged/Rejected are driven by PrescriptionDispatchedEventHandler /
 /// PrescriptionAcknowledgedEventHandler / PrescriptionRejectedEventHandler reacting to events
 /// from Dispatch.Worker, and Expired is driven by PrescriptionExpiryService's periodic sweep.
@@ -127,20 +128,39 @@ public sealed class Prescription
         Status = PrescriptionStatus.Dispatched;
     }
 
-    public void Acknowledge()
+    public void Acknowledge(bool isRepeatDispense = false)
     {
         EnsureStatus(PrescriptionStatus.Dispatched, "acknowledge");
 
         Status = PrescriptionStatus.Acknowledged;
+
+        if (isRepeatDispense)
+        {
+            var updated = _medications.Select(m => m.WithRepeatRecorded()).ToList();
+            _medications.Clear();
+            _medications.AddRange(updated);
+        }
     }
 
-    public void Reject(string reason)
+    /// <summary>
+    /// A first-time rejection (isRepeatDispense = false) is terminal, matching the pipeline's
+    /// existing behavior. A rejection of a repeat-dispense attempt does not consume a repeat and
+    /// is not terminal - the pharmacy simply couldn't fill it this time, so the prescription
+    /// reverts to Acknowledged and can be retried later.
+    /// </summary>
+    public void Reject(string reason, bool isRepeatDispense = false)
     {
         EnsureStatus(PrescriptionStatus.Dispatched, "reject");
 
         if (string.IsNullOrWhiteSpace(reason))
         {
             throw new DomainException("A rejection reason is required.");
+        }
+
+        if (isRepeatDispense)
+        {
+            Status = PrescriptionStatus.Acknowledged;
+            return;
         }
 
         Status = PrescriptionStatus.Rejected;
@@ -161,19 +181,23 @@ public sealed class Prescription
         Status = PrescriptionStatus.Expired;
     }
 
-    public Prescription Repeat(Guid newId, Scid newScid)
+    /// <summary>
+    /// Re-enters the same prescription into the dispatch pipeline for a repeat dispense - no new
+    /// signature is required, since the original signature already authorizes each medication's
+    /// Repeats count. Requires every medication to still have a repeat remaining (the whole
+    /// script is dispensed together, so it is gated by the medication with the fewest left).
+    /// </summary>
+    public void RequestRepeatDispense()
     {
-        if (Status is not (PrescriptionStatus.Signed or PrescriptionStatus.Dispatched or PrescriptionStatus.Acknowledged))
+        EnsureStatus(PrescriptionStatus.Acknowledged, "request a repeat dispense for");
+
+        if (_medications.Any(m => !m.HasRepeatsRemaining))
         {
             throw new InvalidPrescriptionStateException(
-                $"Cannot repeat a prescription in {Status} status; it must be Signed, Dispatched, or Acknowledged.");
+                "Cannot request a repeat dispense: at least one medication has no repeats remaining.");
         }
 
-        var repeatedMedications = _medications.Select(m => new PrescriptionMedication(
-            Guid.NewGuid(), m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
-            m.Route, m.Strength, m.IsPrn, m.Notes));
-
-        return new Prescription(newId, newScid, PatientId, ProviderId, PracticeLocationId, repeatedMedications, repeatOfPrescriptionId: Id);
+        Status = PrescriptionStatus.Signed;
     }
 
     private void EnsureStatus(PrescriptionStatus required, string action)

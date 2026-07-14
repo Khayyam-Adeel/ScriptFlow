@@ -3,9 +3,9 @@ using ScriptFlow.API.Application.Commands;
 
 namespace ScriptFlow.API.Application.Validators;
 
-public sealed class RepeatPrescriptionCommandValidator : AbstractValidator<RepeatPrescriptionCommand>
+public sealed class RequestRepeatDispenseCommandValidator : AbstractValidator<RequestRepeatDispenseCommand>
 {
-    public RepeatPrescriptionCommandValidator()
+    public RequestRepeatDispenseCommandValidator()
     {
         RuleFor(x => x.PrescriptionId).NotEmpty();
     }

@@ -76,4 +76,69 @@ public class PrescriptionMedicationTests
         Assert.Throws<DomainException>(() =>
             new PrescriptionMedication(Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, directions!));
     }
+
+    [Fact]
+    public void Constructor_WithoutRepeats_DefaultsToZeroAndNoRepeatsRemaining()
+    {
+        var medication = new PrescriptionMedication(
+            Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food");
+
+        Assert.Equal(0, medication.Repeats);
+        Assert.Equal(0, medication.RepeatsUsed);
+        Assert.False(medication.HasRepeatsRemaining);
+    }
+
+    [Fact]
+    public void Constructor_WithRepeatsGreaterThanRepeatsUsed_HasRepeatsRemainingIsTrue()
+    {
+        var medication = new PrescriptionMedication(
+            Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food",
+            repeats: 3, repeatsUsed: 1);
+
+        Assert.True(medication.HasRepeatsRemaining);
+    }
+
+    [Fact]
+    public void Constructor_WithNegativeRepeats_ThrowsDomainException()
+    {
+        Assert.Throws<DomainException>(() =>
+            new PrescriptionMedication(
+                Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food",
+                repeats: -1));
+    }
+
+    [Fact]
+    public void Constructor_WithRepeatsUsedGreaterThanRepeats_ThrowsDomainException()
+    {
+        Assert.Throws<DomainException>(() =>
+            new PrescriptionMedication(
+                Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food",
+                repeats: 1, repeatsUsed: 2));
+    }
+
+    [Fact]
+    public void WithRepeatRecorded_IncrementsRepeatsUsed()
+    {
+        var medication = new PrescriptionMedication(
+            Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food",
+            repeats: 3, repeatsUsed: 1);
+
+        var updated = medication.WithRepeatRecorded();
+
+        Assert.Equal(2, updated.RepeatsUsed);
+        Assert.Equal(3, updated.Repeats);
+        Assert.True(updated.HasRepeatsRemaining);
+    }
+
+    [Fact]
+    public void WithRepeatRecorded_WhenLastRepeatUsed_HasRepeatsRemainingIsFalse()
+    {
+        var medication = new PrescriptionMedication(
+            Guid.NewGuid(), Guid.NewGuid(), "500mg", "Twice daily", "7 days", 14, "Take with food",
+            repeats: 1, repeatsUsed: 0);
+
+        var updated = medication.WithRepeatRecorded();
+
+        Assert.False(updated.HasRepeatsRemaining);
+    }
 }

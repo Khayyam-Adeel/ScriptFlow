@@ -46,8 +46,8 @@ public sealed class PrescriptionsController : ControllerBase
     [HttpPost("{id:guid}/repeat")]
     public async Task<IActionResult> Repeat(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new RepeatPrescriptionCommand(id), cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        var result = await _mediator.Send(new RequestRepeatDispenseCommand(id), cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
@@ -74,6 +74,32 @@ public sealed class PrescriptionsController : ControllerBase
     public async Task<IActionResult> GetDailyVolume(CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetPrescriptionDailyVolumeQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Admin overview chart: total prescription volume per practice location.
+    /// "reporting/volume-by-location" is a fixed literal, so it never collides with GetById's
+    /// {id:guid} route.</summary>
+    [HttpGet("reporting/volume-by-location")]
+    public async Task<IActionResult> GetVolumeByLocation(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetVolumeByLocationQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Admin overview chart: rejection rate of finalized prescriptions per practice location.</summary>
+    [HttpGet("reporting/rejection-rate-by-location")]
+    public async Task<IActionResult> GetRejectionRateByLocation(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetRejectionRateByLocationQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Admin overview chart: rejection rate of finalized prescriptions per provider.</summary>
+    [HttpGet("reporting/rejection-rate-by-provider")]
+    public async Task<IActionResult> GetRejectionRateByProvider(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetRejectionRateByProviderQuery(), cancellationToken);
         return Ok(result);
     }
 

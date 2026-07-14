@@ -11,4 +11,5 @@ public sealed class PrescriptionRejectedEvent : IntegrationEvent
     public required string RejectionReason { get; init; }
     public required DateTime RejectedAtUtc { get; init; }
     public required PrescriptionStatus Status { get; init; }
+    public bool IsRepeatDispense { get; init; }
 }
