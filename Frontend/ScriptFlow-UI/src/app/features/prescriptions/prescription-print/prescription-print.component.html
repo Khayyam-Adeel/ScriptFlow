@@ -1,0 +1,77 @@
+@if (prescription(); as rx) {
+  <div class="print-toolbar">
+    <app-button variant="secondary" (clicked)="continueClicked.emit()">
+      <app-icon name="check" [size]="16" />
+      Continue to sign
+    </app-button>
+    <app-button (clicked)="print()">
+      <app-icon name="send" [size]="16" />
+      Print
+    </app-button>
+  </div>
+
+  <div class="print-sheet">
+    <header class="sheet-header">
+      <h1>{{ practiceLocation()?.name }}</h1>
+      @if (practiceLocation(); as location) {
+        <p class="sheet-address">{{ location.address }}</p>
+        <p class="sheet-phone">tel: {{ location.phone }}</p>
+        <p class="sheet-hpi">HPI Facility {{ location.hpiNumber }}</p>
+      }
+    </header>
+
+    <div class="sheet-row">
+      <div>
+        <h2 class="provider-name">{{ providerTitle }} {{ provider()?.firstName }} {{ provider()?.lastName }}</h2>
+        <p class="sheet-meta">Reg Auth No. {{ provider()?.nzmcNo }}</p>
+      </div>
+      <div class="item-count-box">Item Count: <strong>{{ rx.medications.length }}</strong></div>
+    </div>
+
+    <div class="sheet-row sheet-row-patient">
+      <div>
+        <h2 class="patient-name">{{ patient()?.firstName }} {{ patient()?.lastName }}</h2>
+        @if (patient(); as p) {
+          <p class="sheet-meta">
+            M: {{ p.phoneNumber }} &nbsp;&nbsp; DOB: {{ p.dateOfBirth | date: 'd MMM y' }}
+            &nbsp;&nbsp; NHI: {{ p.nhi }} &nbsp;&nbsp; Gender: {{ p.gender }}
+          </p>
+        }
+      </div>
+      <app-barcode [value]="rx.scid" [height]="45" />
+    </div>
+
+    <p class="sheet-rx-line">RX &nbsp; {{ rx.createdAtUtc | date: 'd MMM y HH:mm' }}</p>
+    <p class="sheet-disclaimer">Dispense stat list medicines once only unless Frequent dispense specified</p>
+
+    @for (medication of rx.medications; track medication.id) {
+      <div class="medication-block">
+        <p class="med-name">
+          {{ medication.medicineName }}
+          @if (medication.strength) {
+            - {{ medication.strength }}
+          }
+          @if (medication.isPrn) {
+            <span class="prn-badge">PRN</span>
+          }
+        </p>
+        <p class="med-line"><span>Sig:</span> {{ medication.takeValue }} {{ medication.frequency }} for {{ medication.duration }}</p>
+        <p class="med-line"><span>Mitte:</span> {{ medication.quantity }} {{ medicineForm(medication.medicineId) }}(s)</p>
+        <p class="med-line"><span>Repeats:</span> {{ medication.repeats }}</p>
+        @if (medication.route) {
+          <p class="med-line"><span>Route:</span> {{ medication.route }}</p>
+        }
+        @if (medication.notes) {
+          <p class="med-line"><span>Notes:</span> {{ medication.notes }}</p>
+        }
+      </div>
+    }
+
+    <footer class="sheet-footer">
+      <span class="signature-line">{{ providerTitle }} {{ provider()?.firstName }} {{ provider()?.lastName }} ____________________</span>
+      <span>Page 1 of 1</span>
+    </footer>
+  </div>
+} @else {
+  <app-spinner />
+}

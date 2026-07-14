@@ -1,0 +1,133 @@
+.print-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+/* The sheet itself is deliberately plain black-on-white, independent of the app's theme -
+   it's meant to look like an actual printed prescription, not a themed UI card. */
+.print-sheet {
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.sheet-header {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+.sheet-header h1 {
+  margin: 0 0 var(--space-2) 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.sheet-header p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.sheet-row-patient {
+  align-items: center;
+}
+
+.provider-name {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.patient-name {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.sheet-meta {
+  margin: var(--space-1) 0 0 0;
+  font-size: 0.85rem;
+}
+
+.item-count-box {
+  border: 1px solid #000000;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.sheet-rx-line {
+  font-weight: 600;
+  margin: var(--space-4) 0 var(--space-2) 0;
+}
+
+.sheet-disclaimer {
+  font-weight: 600;
+  margin: 0 0 var(--space-4) 0;
+}
+
+.medication-block {
+  margin-bottom: var(--space-4);
+}
+
+.med-name {
+  font-weight: 700;
+  margin: 0 0 var(--space-1) 0;
+}
+
+.prn-badge {
+  font-weight: 600;
+  font-size: 0.75rem;
+  border: 1px solid #000000;
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+  margin-left: var(--space-2);
+}
+
+.med-line {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.med-line span {
+  display: inline-block;
+  width: 3.5rem;
+  font-weight: 600;
+}
+
+.sheet-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: var(--space-8);
+  font-size: 0.85rem;
+}
+
+.signature-line {
+  letter-spacing: 0.02em;
+}
+
+@media print {
+  .print-toolbar {
+    display: none;
+  }
+
+  .print-sheet {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+}

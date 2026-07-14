@@ -255,3 +255,25 @@ a {
   padding: var(--space-6);
   max-width: calc(var(--form-max-width) + 2 * var(--space-6));
 }
+
+/* Global print isolation for the prescription print-sheet (see
+   prescription-print.component.ts). Component styles are view-encapsulated and can't reach
+   outside their own element tree, so hiding the rest of the app (sidebar, the page behind the
+   modal) has to happen here, not in the modal/print-sheet's own scoped CSS. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+
+  .print-sheet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
