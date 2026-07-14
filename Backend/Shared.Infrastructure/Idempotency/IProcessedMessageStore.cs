@@ -6,5 +6,5 @@ namespace Shared.Infrastructure.Idempotency;
 public interface IProcessedMessageStore
 {
     Task<bool> IsProcessedAsync(Guid eventId, CancellationToken cancellationToken);
-    Task MarkProcessedAsync(Guid eventId, CancellationToken cancellationToken);
+    Task MarkProcessedAsync(Guid eventId, string eventType, Guid prescriptionId, CancellationToken cancellationToken);
 }

@@ -55,7 +55,7 @@ public static class InfrastructureServiceCollectionExtensions
     // PrescriptionAcknowledgedEventHandler / PrescriptionRejectedEventHandler.
     private static void AddPrescriptionLifecycleConsumers(IServiceCollection services)
     {
-        services.AddSingleton<IProcessedMessageStore, InMemoryProcessedMessageStore>();
+        services.AddSingleton<IProcessedMessageStore, SqlProcessedMessageStore>();
         services.AddSingleton<PrescriptionDispatchedEventHandler>();
         services.AddSingleton<PrescriptionAcknowledgedEventHandler>();
         services.AddSingleton<PrescriptionRejectedEventHandler>();

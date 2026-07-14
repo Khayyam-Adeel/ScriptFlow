@@ -55,6 +55,7 @@ public sealed class PrescriptionDispatchedEventHandler
             CorrelationId = dispatchedEvent.CorrelationId
         }, cancellationToken);
 
-        await _processedMessages.MarkProcessedAsync(dispatchedEvent.EventId, cancellationToken);
+        await _processedMessages.MarkProcessedAsync(
+            dispatchedEvent.EventId, nameof(PrescriptionDispatchedEvent), dispatchedEvent.PrescriptionId, cancellationToken);
     }
 }

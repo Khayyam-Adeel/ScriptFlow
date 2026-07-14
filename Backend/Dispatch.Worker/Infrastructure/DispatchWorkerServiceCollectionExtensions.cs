@@ -18,7 +18,7 @@ public static class DispatchWorkerServiceCollectionExtensions
     {
         services.Configure<PharmacyGatewayOptions>(configuration.GetSection(PharmacyGatewayOptions.SectionName));
 
-        services.AddSingleton<IProcessedMessageStore, InMemoryProcessedMessageStore>();
+        services.AddSingleton<IProcessedMessageStore, SqlProcessedMessageStore>();
         services.AddSingleton<PrescriptionSignedEventHandler>();
 
         services.AddHttpClient<IPharmacyGatewayClient, PharmacyGatewayHttpClient>((provider, client) =>
