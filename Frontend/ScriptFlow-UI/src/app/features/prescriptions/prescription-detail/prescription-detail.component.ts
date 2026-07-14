@@ -57,6 +57,10 @@ export class PrescriptionDetailComponent {
     return status === 'Signed' || status === 'Dispatched' || status === 'Acknowledged';
   }
 
+  get isRejected(): boolean {
+    return this.prescription()?.status === 'Rejected';
+  }
+
   constructor() {
     this.load();
 
@@ -107,5 +111,15 @@ export class PrescriptionDetailComponent {
         this.notifications.success(`Repeat prescription ${repeated.scid} created.`);
         this.router.navigate(['/prescriptions', repeated.id]);
       });
+  }
+
+  /** Rejected is deliberately not repeatable (Prescription.Repeat() excludes it) - the pharmacy
+   * declined this exact prescription, so re-issuing the same medications would likely hit the
+   * same reason again. The correction is a fresh prescription, pre-filling only the patient
+   * (same queryParams contract prescription-form already supports) so the prescriber
+   * consciously re-picks provider/medications in light of why this one was rejected. */
+  createReplacement(): void {
+    const patientId = this.prescription()?.patientId;
+    this.router.navigate(['/prescriptions/new'], { queryParams: { patientId } });
   }
 }

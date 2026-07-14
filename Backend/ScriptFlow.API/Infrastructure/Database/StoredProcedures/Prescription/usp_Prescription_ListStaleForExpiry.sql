@@ -18,7 +18,7 @@ BEGIN
 
         SELECT
             Id, Scid, PatientId, ProviderId, PracticeLocationId, Status,
-            RepeatOfPrescriptionId, CreatedAtUtc, SignedAtUtc
+            RepeatOfPrescriptionId, CreatedAtUtc, SignedAtUtc, RejectionReason
         INTO #Stale
         FROM Prescription.tblPrescriptions
         WHERE IsDeleted = 0

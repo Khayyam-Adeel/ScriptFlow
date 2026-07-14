@@ -14,8 +14,18 @@
       @if (canRepeat) {
         <app-button variant="secondary" [loading]="actionInFlight()" (clicked)="repeat()">Repeat</app-button>
       }
+      @if (isRejected) {
+        <app-button (clicked)="createReplacement()">Create replacement prescription</app-button>
+      }
     </div>
   </div>
+
+  @if (isRejected) {
+    <div class="rejection-callout">
+      <span class="rejection-callout-label">Rejected by pharmacy</span>
+      <p>{{ prescription.rejectionReason || 'No reason was provided.' }}</p>
+    </div>
+  }
 
   <dl class="details">
     <dt>Patient</dt>

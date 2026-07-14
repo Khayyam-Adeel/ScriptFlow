@@ -166,15 +166,16 @@ public class PrescriptionTests
     }
 
     [Fact]
-    public void Reject_WhileDispatched_TransitionsToRejected()
+    public void Reject_WhileDispatched_TransitionsToRejectedAndSetsReason()
     {
         var prescription = NewPrescription();
         prescription.Sign();
         prescription.Dispatch();
 
-        prescription.Reject();
+        prescription.Reject("OutOfStock");
 
         Assert.Equal(PrescriptionStatus.Rejected, prescription.Status);
+        Assert.Equal("OutOfStock", prescription.RejectionReason);
     }
 
     [Fact]
@@ -182,7 +183,7 @@ public class PrescriptionTests
     {
         var prescription = NewPrescription();
 
-        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Reject());
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Reject("OutOfStock"));
     }
 
     [Fact]
@@ -191,7 +192,20 @@ public class PrescriptionTests
         var prescription = NewPrescription();
         prescription.Sign();
 
-        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Reject());
+        Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Reject("OutOfStock"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Reject_WithNoReason_ThrowsDomainException(string? reason)
+    {
+        var prescription = NewPrescription();
+        prescription.Sign();
+        prescription.Dispatch();
+
+        Assert.Throws<DomainException>(() => prescription.Reject(reason!));
     }
 
     [Theory]
@@ -202,7 +216,8 @@ public class PrescriptionTests
     {
         var prescription = Prescription.Rehydrate(
             Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            repeatOfPrescriptionId: null, status, DateTime.UtcNow.AddDays(-3), signedAtUtc: null, OneMedication());
+            repeatOfPrescriptionId: null, status, DateTime.UtcNow.AddDays(-3), signedAtUtc: null,
+            rejectionReason: null, OneMedication());
 
         prescription.Expire();
 
@@ -217,7 +232,8 @@ public class PrescriptionTests
     {
         var prescription = Prescription.Rehydrate(
             Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            repeatOfPrescriptionId: null, status, DateTime.UtcNow.AddDays(-3), signedAtUtc: null, OneMedication());
+            repeatOfPrescriptionId: null, status, DateTime.UtcNow.AddDays(-3), signedAtUtc: null,
+            rejectionReason: null, OneMedication());
 
         Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Expire());
     }
@@ -230,7 +246,8 @@ public class PrescriptionTests
     {
         var original = Prescription.Rehydrate(
             Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            repeatOfPrescriptionId: null, status, DateTime.UtcNow, DateTime.UtcNow, OneMedication());
+            repeatOfPrescriptionId: null, status, DateTime.UtcNow, DateTime.UtcNow,
+            rejectionReason: null, OneMedication());
 
         var newId = Guid.NewGuid();
         var newScid = new Scid("9AAAAABBBBB");
@@ -254,7 +271,8 @@ public class PrescriptionTests
     {
         var prescription = Prescription.Rehydrate(
             Guid.NewGuid(), ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            repeatOfPrescriptionId: null, status, DateTime.UtcNow, signedAtUtc: null, OneMedication());
+            repeatOfPrescriptionId: null, status, DateTime.UtcNow, signedAtUtc: null,
+            rejectionReason: null, OneMedication());
 
         Assert.Throws<InvalidPrescriptionStateException>(() => prescription.Repeat(Guid.NewGuid(), new Scid("9AAAAABBBBB")));
     }
@@ -269,12 +287,14 @@ public class PrescriptionTests
 
         var prescription = Prescription.Rehydrate(
             id, ValidScid, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            repeatOfId, PrescriptionStatus.Signed, createdAt, signedAt, OneMedication());
+            repeatOfId, PrescriptionStatus.Signed, createdAt, signedAt,
+            rejectionReason: null, OneMedication());
 
         Assert.Equal(id, prescription.Id);
         Assert.Equal(PrescriptionStatus.Signed, prescription.Status);
         Assert.Equal(createdAt, prescription.CreatedAtUtc);
         Assert.Equal(signedAt, prescription.SignedAtUtc);
         Assert.Equal(repeatOfId, prescription.RepeatOfPrescriptionId);
+        Assert.Null(prescription.RejectionReason);
     }
 }

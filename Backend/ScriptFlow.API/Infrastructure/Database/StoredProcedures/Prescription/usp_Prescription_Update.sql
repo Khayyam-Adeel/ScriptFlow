@@ -5,11 +5,12 @@
 -- the status changed. Consistent with the current repository contract; a narrower
 -- "update status only" SP can be split out later if this becomes a perf concern.
 CREATE OR ALTER PROCEDURE Prescription.usp_Prescription_Update
-    @Id          UNIQUEIDENTIFIER,
-    @Status      TINYINT,
-    @SignedAtUtc DATETIME2(3) = NULL,
-    @Medications dbo.tvpMedicationLine READONLY,
-    @UpdatedBy   UNIQUEIDENTIFIER
+    @Id              UNIQUEIDENTIFIER,
+    @Status          TINYINT,
+    @SignedAtUtc     DATETIME2(3)  = NULL,
+    @RejectionReason NVARCHAR(500) = NULL,
+    @Medications     dbo.tvpMedicationLine READONLY,
+    @UpdatedBy       UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -18,10 +19,11 @@ BEGIN
 
         UPDATE Prescription.tblPrescriptions
         SET
-            Status      = @Status,
-            SignedAtUtc = @SignedAtUtc,
-            UpdatedAt   = SYSUTCDATETIME(),
-            UpdatedBy   = @UpdatedBy
+            Status          = @Status,
+            SignedAtUtc     = @SignedAtUtc,
+            RejectionReason = @RejectionReason,
+            UpdatedAt       = SYSUTCDATETIME(),
+            UpdatedBy       = @UpdatedBy
         WHERE Id = @Id;
 
         DELETE FROM dbo.PrescriptionMedications

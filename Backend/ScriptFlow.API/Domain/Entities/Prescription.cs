@@ -27,6 +27,11 @@ public sealed class Prescription
     public DateTime CreatedAtUtc { get; }
     public DateTime? SignedAtUtc { get; private set; }
 
+    /// <summary>Set only by Reject() - the pharmacy's reason for a business rejection (e.g.
+    /// "OutOfStock"), surfaced to the prescriber so they know what to do next (see
+    /// PrescriptionRejectedEvent, the only source of this value).</summary>
+    public string? RejectionReason { get; private set; }
+
     public IReadOnlyCollection<PrescriptionMedication> Medications => _medications.AsReadOnly();
 
     public Prescription(
@@ -39,7 +44,8 @@ public sealed class Prescription
         Guid? repeatOfPrescriptionId = null)
         : this(
             id, scid, patientId, providerId, practiceLocationId, repeatOfPrescriptionId,
-            PrescriptionStatus.Created, DateTime.UtcNow, signedAtUtc: null, RequireNonEmpty(medications))
+            PrescriptionStatus.Created, DateTime.UtcNow, signedAtUtc: null, rejectionReason: null,
+            RequireNonEmpty(medications))
     {
     }
 
@@ -60,10 +66,11 @@ public sealed class Prescription
         PrescriptionStatus status,
         DateTime createdAtUtc,
         DateTime? signedAtUtc,
+        string? rejectionReason,
         IEnumerable<PrescriptionMedication> medications)
         => new(
             id, scid, patientId, providerId, practiceLocationId, repeatOfPrescriptionId,
-            status, createdAtUtc, signedAtUtc, medications.ToList());
+            status, createdAtUtc, signedAtUtc, rejectionReason, medications.ToList());
 
     private Prescription(
         Guid id,
@@ -75,6 +82,7 @@ public sealed class Prescription
         PrescriptionStatus status,
         DateTime createdAtUtc,
         DateTime? signedAtUtc,
+        string? rejectionReason,
         List<PrescriptionMedication> medications)
     {
         Id = id;
@@ -86,6 +94,7 @@ public sealed class Prescription
         Status = status;
         CreatedAtUtc = createdAtUtc;
         SignedAtUtc = signedAtUtc;
+        RejectionReason = rejectionReason;
         _medications.AddRange(medications);
     }
 
@@ -125,11 +134,17 @@ public sealed class Prescription
         Status = PrescriptionStatus.Acknowledged;
     }
 
-    public void Reject()
+    public void Reject(string reason)
     {
         EnsureStatus(PrescriptionStatus.Dispatched, "reject");
 
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new DomainException("A rejection reason is required.");
+        }
+
         Status = PrescriptionStatus.Rejected;
+        RejectionReason = reason;
     }
 
     /// <summary>Reachable from any non-terminal state - a prescription can go stale while still

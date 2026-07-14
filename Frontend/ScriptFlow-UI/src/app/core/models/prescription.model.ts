@@ -33,6 +33,7 @@ export interface Prescription {
   repeatOfPrescriptionId: string | null;
   createdAtUtc: string;
   signedAtUtc: string | null;
+  rejectionReason: string | null;
   medications: Medication[];
 }
 

@@ -16,7 +16,8 @@ BEGIN
             Status,
             RepeatOfPrescriptionId,
             CreatedAtUtc,
-            SignedAtUtc
+            SignedAtUtc,
+            RejectionReason
         FROM Prescription.tblPrescriptions
         WHERE Id = @Id
           AND IsDeleted = 0;

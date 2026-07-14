@@ -187,6 +187,7 @@ CREATE TABLE [Prescription].[tblPrescriptions] (
     [RepeatOfPrescriptionId] UNIQUEIDENTIFIER NULL,
     [CreatedAtUtc]           DATETIME2 (3)    NOT NULL,
     [SignedAtUtc]            DATETIME2 (3)    NULL,
+    [RejectionReason]        NVARCHAR (500)   NULL,
     [IsActive]               BIT              NOT NULL,
     [IsDeleted]              BIT              NOT NULL,
     [InsertedAt]             DATETIME2 (3)    NOT NULL,

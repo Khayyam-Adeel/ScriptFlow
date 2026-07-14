@@ -25,7 +25,7 @@ BEGIN
 
         SELECT TOP (200)
             Id, Scid, PatientId, ProviderId, PracticeLocationId, Status,
-            RepeatOfPrescriptionId, CreatedAtUtc, SignedAtUtc
+            RepeatOfPrescriptionId, CreatedAtUtc, SignedAtUtc, RejectionReason
         INTO #Filtered
         FROM Prescription.tblPrescriptions
         WHERE IsDeleted = 0

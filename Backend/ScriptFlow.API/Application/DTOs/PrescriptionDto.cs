@@ -12,4 +12,5 @@ public sealed record PrescriptionDto(
     Guid? RepeatOfPrescriptionId,
     DateTime CreatedAtUtc,
     DateTime? SignedAtUtc,
+    string? RejectionReason,
     IReadOnlyCollection<MedicationDto> Medications);

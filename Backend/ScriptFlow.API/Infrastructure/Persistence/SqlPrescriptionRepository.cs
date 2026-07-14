@@ -69,6 +69,7 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
                 prescription.Id,
                 Status = (byte)prescription.Status,
                 prescription.SignedAtUtc,
+                prescription.RejectionReason,
                 Medications = BuildMedicationsTable(prescription.Medications).AsTableValuedParameter("dbo.tvpMedicationLine"),
                 // Acknowledge/Reject are driven by a RabbitMQ consumer reacting to a pharmacy
                 // outcome, not an HTTP request, so there is no interactive user to attribute the
@@ -182,6 +183,7 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
             (PrescriptionStatus)header.Status,
             header.CreatedAtUtc,
             header.SignedAtUtc,
+            header.RejectionReason,
             medications);
     }
 
@@ -208,7 +210,8 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
 
     private sealed record PrescriptionHeaderRow(
         Guid Id, string Scid, Guid PatientId, Guid ProviderId, Guid PracticeLocationId,
-        byte Status, Guid? RepeatOfPrescriptionId, DateTime CreatedAtUtc, DateTime? SignedAtUtc);
+        byte Status, Guid? RepeatOfPrescriptionId, DateTime CreatedAtUtc, DateTime? SignedAtUtc,
+        string? RejectionReason);
 
     private sealed record PrescriptionMedicationRow(
         Guid Id, Guid MedicineId, string TakeValue, string Frequency, string Duration, int Quantity, string Directions);

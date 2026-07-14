@@ -39,5 +39,6 @@ public static class MappingExtensions
             prescription.RepeatOfPrescriptionId,
             prescription.CreatedAtUtc,
             prescription.SignedAtUtc,
+            prescription.RejectionReason,
             prescription.Medications.Select(m => m.ToDto(medicinesById)).ToList());
 }

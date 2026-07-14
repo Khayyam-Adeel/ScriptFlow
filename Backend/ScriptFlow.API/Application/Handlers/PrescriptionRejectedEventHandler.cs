@@ -45,7 +45,7 @@ public sealed class PrescriptionRejectedEventHandler
         var prescription = await _prescriptions.GetByIdAsync(rejectedEvent.PrescriptionId, cancellationToken)
             ?? throw new EntityNotFoundException("Prescription", rejectedEvent.PrescriptionId);
 
-        prescription.Reject();
+        prescription.Reject(rejectedEvent.RejectionReason);
         await _prescriptions.UpdateAsync(prescription, cancellationToken);
 
         await _eventPublisher.PublishAsync(new PrescriptionStatusChangedEvent
