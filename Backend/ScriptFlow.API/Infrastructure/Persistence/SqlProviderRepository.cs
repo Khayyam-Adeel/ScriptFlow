@@ -43,6 +43,9 @@ public sealed class SqlProviderRepository : IProviderRepository
                 Type = (byte)provider.Type,
                 provider.NzmcNo,
                 provider.PracticeLocationId,
+                provider.Email,
+                provider.PhoneNumber,
+                provider.Qualification,
                 InsertedBy = _currentUser.UserId
             },
             commandType: CommandType.StoredProcedure,
@@ -61,8 +64,30 @@ public sealed class SqlProviderRepository : IProviderRepository
         return rows.Select(ToEntity).ToList();
     }
 
-    private static Provider ToEntity(ProviderRow row) =>
-        new(row.Id, row.FirstName, row.LastName, (ProviderType)row.Type, row.NzmcNo, row.PracticeLocationId);
+    public async Task<IReadOnlyDictionary<Guid, Provider>> GetManyAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idTable = new DataTable();
+        idTable.Columns.Add("Id", typeof(Guid));
+        foreach (var id in ids.Distinct())
+        {
+            idTable.Rows.Add(id);
+        }
 
-    private sealed record ProviderRow(Guid Id, string FirstName, string LastName, byte Type, string NzmcNo, Guid PracticeLocationId);
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var rows = await connection.QueryAsync<ProviderRow>(new CommandDefinition(
+            "Profile.usp_Provider_GetByIds",
+            new { Ids = idTable.AsTableValuedParameter("dbo.tvpGuidList") },
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: cancellationToken));
+
+        return rows.Select(ToEntity).ToDictionary(p => p.Id, p => p);
+    }
+
+    private static Provider ToEntity(ProviderRow row) =>
+        new(row.Id, row.FirstName, row.LastName, (ProviderType)row.Type, row.NzmcNo, row.PracticeLocationId,
+            row.Email, row.PhoneNumber, row.Qualification);
+
+    private sealed record ProviderRow(
+        Guid Id, string FirstName, string LastName, byte Type, string NzmcNo, Guid PracticeLocationId,
+        string Email, string PhoneNumber, string Qualification);
 }

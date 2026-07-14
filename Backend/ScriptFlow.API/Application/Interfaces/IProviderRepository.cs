@@ -9,4 +9,8 @@ public interface IProviderRepository
 
     /// <summary>Lists active providers, optionally filtered to one practice location, for prescription pickers.</summary>
     Task<IReadOnlyCollection<Provider>> ListAsync(Guid? practiceLocationId, CancellationToken cancellationToken = default);
+
+    /// <summary>Bulk lookup for resolving provider names on the prescription list grid without
+    /// one request per row (mirrors IMedicineRepository.GetManyAsync).</summary>
+    Task<IReadOnlyDictionary<Guid, Provider>> GetManyAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 }

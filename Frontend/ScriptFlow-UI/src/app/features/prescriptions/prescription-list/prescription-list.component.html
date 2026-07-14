@@ -90,6 +90,8 @@
     <thead>
       <tr>
         <th>SCID</th>
+        <th>Patient</th>
+        <th>Provider</th>
         <th>Status</th>
         <th>Created</th>
         <th>Medications</th>
@@ -99,6 +101,8 @@
       @for (prescription of pagedPrescriptions(); track prescription.id) {
         <tr class="row-link" [routerLink]="['/prescriptions', prescription.id]">
           <td><span class="mono-chip">{{ prescription.scid }}</span></td>
+          <td>{{ prescription.patientName || '—' }}</td>
+          <td>{{ prescription.providerName || '—' }}</td>
           <td><app-status-badge [status]="prescription.status" /></td>
           <td>{{ prescription.createdAtUtc | date: 'medium' }}</td>
           <td>
