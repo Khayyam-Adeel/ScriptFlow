@@ -19,6 +19,17 @@
 -- Requires SQLCMD mode (plain sqlcmd has this on by default; SSMS needs Query > SQLCMD Mode).
 :setvar DatabaseName "ScriptFlow"
 GO
+
+-- No ON/LOG ON clause deliberately - omitting it lets SQL Server put the files in whatever
+-- its own configured default data/log path is, which is the only thing that stays portable
+-- across a Linux Docker container, a GitHub Actions service container, and a real Windows SQL
+-- Server instance without hardcoding any of their differing default paths.
+IF DB_ID(N'$(DatabaseName)') IS NULL
+BEGIN
+    PRINT N'Creating database $(DatabaseName)...';
+    CREATE DATABASE [$(DatabaseName)];
+END
+GO
 USE [$(DatabaseName)];
 GO
 
