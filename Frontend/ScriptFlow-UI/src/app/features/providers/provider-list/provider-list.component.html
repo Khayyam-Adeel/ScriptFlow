@@ -1,0 +1,68 @@
+<div class="page-header">
+  <div>
+    <h1>Providers</h1>
+    <p class="page-subtitle">
+      @if (!loading()) {
+        {{ filteredProviders().length }} {{ filteredProviders().length === 1 ? 'prescriber' : 'prescribers' }} in the practice.
+      } @else {
+        Loading providers…
+      }
+    </p>
+  </div>
+  @if (isAdmin()) {
+    <div class="page-actions">
+      <app-button [routerLink]="['/providers/new']">
+        <app-icon name="plus" [size]="16" />
+        New provider
+      </app-button>
+    </div>
+  }
+</div>
+
+<div class="search-box">
+  <app-icon class="search-icon" name="search" [size]="18" />
+  <input
+    class="search-input"
+    type="search"
+    [formControl]="queryControl"
+    placeholder="Search by name or NZMC number…"
+  />
+</div>
+
+@if (loading()) {
+  <app-spinner />
+} @else if (filteredProviders().length === 0) {
+  <div class="empty-state">
+    <span class="empty-icon"><app-icon name="stethoscope" [size]="24" /></span>
+    <p class="empty-title">No providers found</p>
+    <p>
+      @if (queryControl.value.trim()) {
+        No prescriber matches "{{ queryControl.value }}".
+      } @else {
+        No providers have been registered yet.
+      }
+    </p>
+  </div>
+} @else {
+  <div class="provider-grid">
+    @for (provider of filteredProviders(); track provider.id) {
+      <a class="provider-card" [routerLink]="['/providers', provider.id]">
+        <span class="avatar">{{ provider.firstName[0] }}{{ provider.lastName[0] }}</span>
+        <div class="provider-meta">
+          <span class="provider-name">{{ provider.firstName }} {{ provider.lastName }}</span>
+          <span class="provider-type" [class]="'type-' + provider.type.toLowerCase()">{{ provider.type }}</span>
+        </div>
+        <div class="provider-facts">
+          <span class="fact">
+            <app-icon name="id-card" [size]="14" />
+            NZMC <span class="mono-chip">{{ provider.nzmcNo }}</span>
+          </span>
+          <span class="fact">
+            <app-icon name="building" [size]="14" />
+            {{ locationName(provider) }}
+          </span>
+        </div>
+      </a>
+    }
+  </div>
+}

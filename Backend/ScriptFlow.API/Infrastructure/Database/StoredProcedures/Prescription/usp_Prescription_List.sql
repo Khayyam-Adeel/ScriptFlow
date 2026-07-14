@@ -47,6 +47,10 @@ BEGIN
             pm.Duration,
             pm.Quantity,
             pm.Directions,
+            pm.Route,
+            pm.Strength,
+            pm.IsPrn,
+            pm.Notes,
             pm.PrescriptionId
         FROM dbo.PrescriptionMedications pm
         WHERE pm.IsDeleted = 0

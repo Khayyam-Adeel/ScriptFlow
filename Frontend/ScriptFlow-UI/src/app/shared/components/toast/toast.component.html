@@ -1,7 +1,23 @@
 <div class="toast-stack">
   @for (notification of notifications(); track notification.id) {
     <div class="toast" [class]="notification.kind" (click)="dismiss(notification.id)">
-      {{ notification.message }}
+      <span class="toast-icon">
+        @switch (notification.kind) {
+          @case ('success') {
+            <app-icon name="check-circle" [size]="18" />
+          }
+          @case ('error') {
+            <app-icon name="alert" [size]="18" />
+          }
+          @default {
+            <app-icon name="info" [size]="18" />
+          }
+        }
+      </span>
+      <span class="toast-message">{{ notification.message }}</span>
+      <button class="toast-close" (click)="dismiss(notification.id)" aria-label="Dismiss">
+        <app-icon name="x" [size]="14" />
+      </button>
     </div>
   }
 </div>

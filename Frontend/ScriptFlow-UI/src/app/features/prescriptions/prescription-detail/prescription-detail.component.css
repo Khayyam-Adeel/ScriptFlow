@@ -1,17 +1,7 @@
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-5);
-}
-
-.page-header h1 {
+.scid-title {
+  font-family: var(--font-mono);
+  letter-spacing: 0;
   margin-bottom: var(--space-2);
-}
-
-.actions {
-  display: flex;
-  gap: var(--space-3);
 }
 
 .lifecycle-stepper {
@@ -20,8 +10,9 @@
   margin: 0 0 var(--space-6) 0;
   padding: var(--space-4) var(--space-5);
   background: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   max-width: var(--form-max-width);
 }
 
@@ -37,9 +28,9 @@
 .lifecycle-step:not(.is-last)::after {
   content: '';
   position: absolute;
-  top: 7px;
-  left: calc(50% + 14px);
-  right: calc(-50% + 14px);
+  top: 9px;
+  left: calc(50% + 16px);
+  right: calc(-50% + 16px);
   height: 2px;
   background: var(--color-border);
 }
@@ -49,11 +40,15 @@
 }
 
 .step-dot {
-  width: 16px;
-  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
+  color: #fff;
   z-index: 1;
 }
 
@@ -98,7 +93,9 @@
 }
 
 .rejection-callout-label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-danger);
   font-weight: 700;
   font-size: 0.8125rem;
@@ -114,36 +111,77 @@
 
 .details {
   background: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   padding: var(--space-5);
   max-width: var(--form-max-width);
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-3) var(--space-5);
   margin-bottom: var(--space-6);
 }
 
 dt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-text-muted);
   font-weight: 600;
+  font-size: 0.9rem;
+}
+
+dt app-icon {
+  color: var(--color-text-faint);
 }
 
 dd {
   margin: 0;
+  font-size: 0.92rem;
 }
 
-h2 {
+dd a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+dd a:hover {
+  text-decoration: underline;
+}
+
+.medications-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin-bottom: var(--space-3);
+}
+
+.medications-heading app-icon {
+  color: var(--color-primary);
+}
+
+.med-total {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--space-1);
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-active);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .medications-table {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-surface);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card);
 }
 
 .medications-table th {
@@ -151,11 +189,40 @@ h2 {
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface-muted);
   color: var(--color-text-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .medications-table td {
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
+
+.med-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.med-name .prn-badge {
+  margin-left: var(--space-2);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border-radius: 999px;
+  padding: 1px var(--space-2);
+  vertical-align: middle;
+}
+
+.med-note {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
 }

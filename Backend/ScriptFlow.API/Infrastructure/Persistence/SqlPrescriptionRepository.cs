@@ -110,7 +110,8 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
             .Select(header => ToEntity(
                 header,
                 medicationsByPrescriptionId[header.Id].Select(m => new PrescriptionMedicationRow(
-                    m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions))))
+                    m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
+                    m.Route, m.Strength, m.IsPrn, m.Notes))))
             .ToList();
     }
 
@@ -164,14 +165,16 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
             .Select(header => ToEntity(
                 header,
                 medicationsByPrescriptionId[header.Id].Select(m => new PrescriptionMedicationRow(
-                    m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions))))
+                    m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
+                    m.Route, m.Strength, m.IsPrn, m.Notes))))
             .ToList();
     }
 
     private static Prescription ToEntity(PrescriptionHeaderRow header, IEnumerable<PrescriptionMedicationRow> medicationRows)
     {
         var medications = medicationRows.Select(m =>
-            new PrescriptionMedication(m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions));
+            new PrescriptionMedication(m.Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
+                m.Route, m.Strength, m.IsPrn, m.Notes));
 
         return Prescription.Rehydrate(
             header.Id,
@@ -189,6 +192,7 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
 
     private static DataTable BuildMedicationsTable(IEnumerable<PrescriptionMedication> medications)
     {
+        // Column order MUST match dbo.tvpMedicationLine exactly - the TVP is positional.
         var table = new DataTable();
         table.Columns.Add("Id", typeof(Guid));
         table.Columns.Add("MedicineId", typeof(Guid));
@@ -197,12 +201,18 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
         table.Columns.Add("Duration", typeof(string));
         table.Columns.Add("Quantity", typeof(int));
         table.Columns.Add("Directions", typeof(string));
+        table.Columns.Add("Route", typeof(string));
+        table.Columns.Add("Strength", typeof(string));
+        table.Columns.Add("IsPrn", typeof(bool));
+        table.Columns.Add("Notes", typeof(string));
 
         foreach (var medication in medications)
         {
             table.Rows.Add(
                 medication.Id, medication.MedicineId, medication.TakeValue,
-                medication.Frequency, medication.Duration, medication.Quantity, medication.Directions);
+                medication.Frequency, medication.Duration, medication.Quantity, medication.Directions,
+                (object?)medication.Route ?? DBNull.Value, (object?)medication.Strength ?? DBNull.Value,
+                medication.IsPrn, (object?)medication.Notes ?? DBNull.Value);
         }
 
         return table;
@@ -214,11 +224,12 @@ public sealed class SqlPrescriptionRepository : IPrescriptionRepository
         string? RejectionReason);
 
     private sealed record PrescriptionMedicationRow(
-        Guid Id, Guid MedicineId, string TakeValue, string Frequency, string Duration, int Quantity, string Directions);
+        Guid Id, Guid MedicineId, string TakeValue, string Frequency, string Duration, int Quantity, string Directions,
+        string? Route, string? Strength, bool IsPrn, string? Notes);
 
     private sealed record PrescriptionMedicationListRow(
         Guid Id, Guid MedicineId, string TakeValue, string Frequency, string Duration, int Quantity, string Directions,
-        Guid PrescriptionId);
+        string? Route, string? Strength, bool IsPrn, string? Notes, Guid PrescriptionId);
 
     private sealed record StatusCountRow(byte Status, int Cnt);
 

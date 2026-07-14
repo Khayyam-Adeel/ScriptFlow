@@ -61,7 +61,8 @@ public sealed class CreatePrescriptionCommandHandler : IRequestHandler<CreatePre
         }
 
         var medications = request.Medications.Select(m => new PrescriptionMedication(
-            Guid.NewGuid(), m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions));
+            Guid.NewGuid(), m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
+            m.Route, m.Strength, m.IsPrn, m.Notes));
 
         var prescription = new Prescription(
             Guid.NewGuid(), Scid.Generate(), patient.Id, provider.Id, practiceLocation.Id, medications);

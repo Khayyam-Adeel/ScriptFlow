@@ -1,28 +1,70 @@
-<div class="auth-card">
-  <h1>ScriptFlow</h1>
-  <p class="subtitle">Sign in to manage prescriptions.</p>
-
-  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
-    <app-text-field
-      label="Email"
-      type="email"
-      [control]="emailControl"
-      placeholder="you@practice.co.nz"
-      errorMessage="Enter a valid email address."
-      [fullWidth]="true"
-    />
-    <app-text-field
-      label="Password"
-      type="password"
-      [control]="passwordControl"
-      placeholder="••••••••"
-      [fullWidth]="true"
-    />
-
-    <div class="form-actions">
-      <app-button type="submit" [loading]="submitting()">Sign in</app-button>
+<div class="auth-showcase">
+  <div class="showcase-inner">
+    <div class="showcase-brand">
+      <span class="brand-mark"><app-icon name="pill" [size]="24" /></span>
+      <span class="brand-name">ScriptFlow</span>
     </div>
-  </form>
+    <h2 class="showcase-headline">Prescribing, streamlined.</h2>
+    <p class="showcase-sub">
+      Create, sign, and track prescriptions end-to-end — with live pharmacy status the moment it changes.
+    </p>
+    <ul class="showcase-features">
+      <li>
+        <span class="feature-icon"><app-icon name="shield" [size]="18" /></span>
+        <div>
+          <strong>Secure e-prescribing</strong>
+          <span>Role-based access with a complete audit trail.</span>
+        </div>
+      </li>
+      <li>
+        <span class="feature-icon"><app-icon name="activity" [size]="18" /></span>
+        <div>
+          <strong>Real-time pharmacy status</strong>
+          <span>Signed, dispatched, acknowledged — the instant it happens.</span>
+        </div>
+      </li>
+      <li>
+        <span class="feature-icon"><app-icon name="pill" [size]="18" /></span>
+        <div>
+          <strong>Full medicine catalog</strong>
+          <span>Route, strength, and PRN captured on every line.</span>
+        </div>
+      </li>
+    </ul>
+    <p class="showcase-foot">ScriptFlow · New Zealand prescription management</p>
+  </div>
+</div>
 
-  <p class="switch">No account? <a routerLink="/register">Register</a></p>
+<div class="auth-main">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark"><app-icon name="pill" [size]="22" /></span>
+      <h1>ScriptFlow</h1>
+    </div>
+    <p class="subtitle">Sign in to manage prescriptions.</p>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <app-text-field
+        label="Email"
+        type="email"
+        [control]="emailControl"
+        placeholder="you@practice.co.nz"
+        errorMessage="Enter a valid email address."
+        [fullWidth]="true"
+      />
+      <app-text-field
+        label="Password"
+        type="password"
+        [control]="passwordControl"
+        placeholder="••••••••"
+        [fullWidth]="true"
+      />
+
+      <div class="form-actions">
+        <app-button type="submit" [loading]="submitting()">Sign in</app-button>
+      </div>
+    </form>
+
+    <p class="switch">No account? <a routerLink="/register">Register</a></p>
+  </div>
 </div>

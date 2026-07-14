@@ -1,21 +1,38 @@
+<a class="back-link" routerLink="/prescriptions">
+  <app-icon name="arrow-left" [size]="14" />
+  All prescriptions
+</a>
+
 @if (prescription(); as prescription) {
   <div class="page-header">
     <div>
-      <h1>{{ prescription.scid }}</h1>
+      <h1 class="scid-title">{{ prescription.scid }}</h1>
       <app-status-badge [status]="prescription.status" />
     </div>
-    <div class="actions">
+    <div class="page-actions">
       @if (canEdit) {
-        <app-button variant="secondary" [routerLink]="['/prescriptions', prescription.id, 'edit']">Edit</app-button>
+        <app-button variant="secondary" [routerLink]="['/prescriptions', prescription.id, 'edit']">
+          <app-icon name="pen" [size]="16" />
+          Edit
+        </app-button>
       }
       @if (canSign) {
-        <app-button [loading]="actionInFlight()" (clicked)="sign()">Sign</app-button>
+        <app-button [loading]="actionInFlight()" (clicked)="sign()">
+          <app-icon name="check" [size]="16" />
+          Sign
+        </app-button>
       }
       @if (canRepeat) {
-        <app-button variant="secondary" [loading]="actionInFlight()" (clicked)="repeat()">Repeat</app-button>
+        <app-button variant="secondary" [loading]="actionInFlight()" (clicked)="repeat()">
+          <app-icon name="repeat" [size]="16" />
+          Repeat
+        </app-button>
       }
       @if (isRejected) {
-        <app-button (clicked)="createReplacement()">Create replacement prescription</app-button>
+        <app-button (clicked)="createReplacement()">
+          <app-icon name="plus" [size]="16" />
+          Create replacement prescription
+        </app-button>
       }
     </div>
   </div>
@@ -23,7 +40,13 @@
   <ol class="lifecycle-stepper">
     @for (step of lifecycleSteps(); track step.label; let last = $last) {
       <li class="lifecycle-step" [class]="'step-' + step.state" [class.is-last]="last">
-        <span class="step-dot"></span>
+        <span class="step-dot">
+          @if (step.state === 'done') {
+            <app-icon name="check" [size]="10" />
+          } @else if (step.state === 'failed') {
+            <app-icon name="x" [size]="10" />
+          }
+        </span>
         <span class="step-label">{{ step.label }}</span>
       </li>
     }
@@ -31,51 +54,86 @@
 
   @if (isRejected) {
     <div class="rejection-callout">
-      <span class="rejection-callout-label">Rejected by pharmacy</span>
+      <span class="rejection-callout-label">
+        <app-icon name="alert" [size]="14" />
+        Rejected by pharmacy
+      </span>
       <p>{{ prescription.rejectionReason || 'No reason was provided.' }}</p>
     </div>
   }
 
   <dl class="details">
-    <dt>Patient</dt>
-    <dd>{{ patient() ? patient()!.firstName + ' ' + patient()!.lastName + ' · ' + patient()!.nhi : '…' }}</dd>
-    <dt>Provider</dt>
-    <dd>{{ provider() ? provider()!.firstName + ' ' + provider()!.lastName + ' (' + provider()!.type + ')' : '…' }}</dd>
-    <dt>Created</dt>
+    <dt><app-icon name="user" [size]="16" /> Patient</dt>
+    <dd>
+      @if (patient(); as patient) {
+        <a [routerLink]="['/patients', patient.id]">{{ patient.firstName }} {{ patient.lastName }}</a>
+        · <span class="mono-chip">{{ patient.nhi }}</span>
+      } @else {
+        …
+      }
+    </dd>
+    <dt><app-icon name="stethoscope" [size]="16" /> Provider</dt>
+    <dd>
+      @if (provider(); as provider) {
+        <a [routerLink]="['/providers', provider.id]">{{ provider.firstName }} {{ provider.lastName }}</a>
+        ({{ provider.type }})
+      } @else {
+        …
+      }
+    </dd>
+    <dt><app-icon name="calendar" [size]="16" /> Created</dt>
     <dd>{{ prescription.createdAtUtc | date: 'medium' }}</dd>
     @if (prescription.signedAtUtc) {
-      <dt>Signed</dt>
+      <dt><app-icon name="pen" [size]="16" /> Signed</dt>
       <dd>{{ prescription.signedAtUtc | date: 'medium' }}</dd>
     }
     @if (prescription.repeatOfPrescriptionId) {
-      <dt>Repeat of</dt>
+      <dt><app-icon name="repeat" [size]="16" /> Repeat of</dt>
       <dd>
         <a [routerLink]="['/prescriptions', prescription.repeatOfPrescriptionId]">{{ prescription.repeatOfPrescriptionId }}</a>
       </dd>
     }
   </dl>
 
-  <h2>Medications</h2>
+  <h2 class="medications-heading">
+    <app-icon name="pill" [size]="18" />
+    Medications
+    <span class="med-total">{{ prescription.medications.length }}</span>
+  </h2>
   <table class="medications-table">
     <thead>
       <tr>
         <th>Medicine</th>
+        <th>Strength</th>
+        <th>Route</th>
         <th>Take</th>
         <th>Frequency</th>
         <th>Duration</th>
-        <th>Quantity</th>
+        <th>Qty</th>
         <th>Directions</th>
       </tr>
     </thead>
     <tbody>
       @for (medication of prescription.medications; track medication.id) {
         <tr>
-          <td>{{ medication.medicineName }}</td>
+          <td class="med-name">
+            {{ medication.medicineName }}
+            @if (medication.isPrn) {
+              <span class="prn-badge">PRN</span>
+            }
+          </td>
+          <td>{{ medication.strength || '—' }}</td>
+          <td>{{ medication.route || '—' }}</td>
           <td>{{ medication.takeValue }}</td>
           <td>{{ medication.frequency }}</td>
           <td>{{ medication.duration }}</td>
           <td>{{ medication.quantity }}</td>
-          <td>{{ medication.directions }}</td>
+          <td>
+            {{ medication.directions }}
+            @if (medication.notes) {
+              <span class="med-note">{{ medication.notes }}</span>
+            }
+          </td>
         </tr>
       }
     </tbody>

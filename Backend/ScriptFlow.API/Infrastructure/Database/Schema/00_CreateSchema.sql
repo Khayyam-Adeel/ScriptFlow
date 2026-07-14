@@ -108,6 +108,10 @@ CREATE TYPE [dbo].[tvpMedicationLine] AS TABLE (
     [Duration]   NVARCHAR (100)   NOT NULL,
     [Quantity]   INT              NOT NULL,
     [Directions] NVARCHAR (1000)  NOT NULL,
+    [Route]      NVARCHAR (100)   NULL,
+    [Strength]   NVARCHAR (100)   NULL,
+    [IsPrn]      BIT              NOT NULL,
+    [Notes]      NVARCHAR (1000)  NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC));
 
 
@@ -391,6 +395,10 @@ CREATE TABLE [dbo].[PrescriptionMedications] (
     [Duration]       NVARCHAR (100)   NOT NULL,
     [Quantity]       INT              NOT NULL,
     [Directions]     NVARCHAR (1000)  NOT NULL,
+    [Route]          NVARCHAR (100)   NULL,
+    [Strength]       NVARCHAR (100)   NULL,
+    [IsPrn]          BIT              NOT NULL,
+    [Notes]          NVARCHAR (1000)  NULL,
     [IsActive]       BIT              NOT NULL,
     [IsDeleted]      BIT              NOT NULL,
     [InsertedAt]     DATETIME2 (3)    NOT NULL,
@@ -745,6 +753,15 @@ PRINT N'Creating Default Constraint [dbo].[DF_PrescriptionMedications_IsActive].
 GO
 ALTER TABLE [dbo].[PrescriptionMedications]
     ADD CONSTRAINT [DF_PrescriptionMedications_IsActive] DEFAULT ((1)) FOR [IsActive];
+
+
+GO
+PRINT N'Creating Default Constraint [dbo].[DF_PrescriptionMedications_IsPrn]...';
+
+
+GO
+ALTER TABLE [dbo].[PrescriptionMedications]
+    ADD CONSTRAINT [DF_PrescriptionMedications_IsPrn] DEFAULT ((0)) FOR [IsPrn];
 
 
 GO

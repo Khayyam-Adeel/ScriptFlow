@@ -1,19 +1,23 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs';
 import { PatientService } from '../../../core/services/patient.service';
 import { Patient } from '../../../core/models/patient.model';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { SpinnerComponent } from '../../../shared/components/spinner/spinner.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-/** Debounced patient search so a prescriber can find a patient by name or NHI before creating a prescription. */
+/**
+ * Lists all patients on load, with debounced name/NHI filtering. Clicking a patient starts a new
+ * prescription for them (the row's "View" link opens the patient detail instead).
+ */
 @Component({
   selector: 'app-patient-search',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, SpinnerComponent],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, SpinnerComponent, IconComponent],
   templateUrl: './patient-search.component.html',
   styleUrl: './patient-search.component.css',
 })
@@ -23,25 +27,18 @@ export class PatientSearchComponent implements OnDestroy {
 
   readonly queryControl = new FormControl('', { nonNullable: true });
   readonly results = signal<Patient[]>([]);
-  readonly loading = signal(false);
-  readonly searched = signal(false);
+  readonly loading = signal(true);
 
   constructor() {
     this.queryControl.valueChanges
       .pipe(
         debounceTime(SEARCH_DEBOUNCE_MS),
+        map((query) => query.trim()),
         distinctUntilChanged(),
+        startWith(''),
         switchMap((query) => {
-          const trimmed = query.trim();
-          if (!trimmed) {
-            this.searched.set(false);
-            this.results.set([]);
-            return [];
-          }
-
           this.loading.set(true);
-          this.searched.set(true);
-          return this.patientService.search(trimmed);
+          return this.patientService.search(query);
         }),
         takeUntil(this.destroyed$),
       )

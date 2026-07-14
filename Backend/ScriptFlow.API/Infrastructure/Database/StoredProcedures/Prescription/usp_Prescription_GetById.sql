@@ -29,7 +29,11 @@ BEGIN
             Frequency,
             Duration,
             Quantity,
-            Directions
+            Directions,
+            Route,
+            Strength,
+            IsPrn,
+            Notes
         FROM dbo.PrescriptionMedications
         WHERE PrescriptionId = @Id
           AND IsDeleted = 0;

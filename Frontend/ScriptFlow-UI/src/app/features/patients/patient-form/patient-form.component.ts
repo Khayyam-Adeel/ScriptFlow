@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { PatientService } from '../../../core/services/patient.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { TextFieldComponent } from '../../../shared/components/text-field/text-field.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 // Matches CreatePatientCommandValidator: NHI is 3 letters followed by 4 digits, e.g. ABC1234.
 const NHI_PATTERN = /^[A-Za-z]{3}[0-9]{4}$/;
@@ -13,7 +14,7 @@ const NHI_PATTERN = /^[A-Za-z]{3}[0-9]{4}$/;
 @Component({
   selector: 'app-patient-form',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, TextFieldComponent],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, TextFieldComponent, IconComponent],
   templateUrl: './patient-form.component.html',
   styleUrl: './patient-form.component.css',
 })

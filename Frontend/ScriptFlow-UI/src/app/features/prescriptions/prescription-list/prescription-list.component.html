@@ -1,9 +1,21 @@
 <div class="page-header">
-  <h1>Prescriptions</h1>
-  <app-button [routerLink]="['/prescriptions/new']">+ New prescription</app-button>
+  <div>
+    <h1>Prescriptions</h1>
+    <p class="page-subtitle">Track every script from creation through pharmacy acknowledgement.</p>
+  </div>
+  <div class="page-actions">
+    <app-button [routerLink]="['/prescriptions/new']">
+      <app-icon name="plus" [size]="16" />
+      New prescription
+    </app-button>
+  </div>
 </div>
 
-<div class="filters-panel">
+<div class="filters-panel card">
+  <div class="filters-title">
+    <app-icon name="filter" [size]="16" />
+    Filters
+  </div>
   <div class="filter-grid">
     <app-select-field
       label="Filter by status"
@@ -20,7 +32,9 @@
       @if (selectedPatient(); as patient) {
         <div class="selected-chip">
           <span>{{ patient.firstName }} {{ patient.lastName }} · {{ patient.nhi }}</span>
-          <button type="button" class="chip-clear" (click)="clearSelectedPatient()" aria-label="Clear patient filter">✕</button>
+          <button type="button" class="chip-clear" (click)="clearSelectedPatient()" aria-label="Clear patient filter">
+            <app-icon name="x" [size]="14" />
+          </button>
         </div>
       } @else {
         <input class="picker-search" type="search" [formControl]="patientQuery" placeholder="Search patients…" />
@@ -39,7 +53,9 @@
       @if (selectedProvider(); as provider) {
         <div class="selected-chip">
           <span>{{ provider.firstName }} {{ provider.lastName }}</span>
-          <button type="button" class="chip-clear" (click)="clearSelectedProvider()" aria-label="Clear provider filter">✕</button>
+          <button type="button" class="chip-clear" (click)="clearSelectedProvider()" aria-label="Clear provider filter">
+            <app-icon name="x" [size]="14" />
+          </button>
         </div>
       } @else {
         <input class="picker-search" type="search" [formControl]="providerQuery" placeholder="Search providers…" />
@@ -56,14 +72,21 @@
 
   <div class="filter-footer">
     <button type="button" class="link-btn" (click)="clearFilters()">Clear all filters</button>
-    <span class="live-indicator" title="Refreshes automatically every 5 seconds">● Live</span>
+    <span class="live-indicator" title="Live status pushes, reconciled every 5 seconds">
+      <span class="live-dot"></span>
+      Live
+    </span>
   </div>
 </div>
 
 @if (!loading() && prescriptions().length === 0) {
-  <p class="empty">No prescriptions found.</p>
+  <div class="empty-state">
+    <span class="empty-icon"><app-icon name="clipboard" [size]="24" /></span>
+    <p class="empty-title">No prescriptions found</p>
+    <p>Try widening the filters, or create a new prescription.</p>
+  </div>
 } @else {
-  <table class="results-table">
+  <table class="data-table">
     <thead>
       <tr>
         <th>SCID</th>
@@ -74,11 +97,16 @@
     </thead>
     <tbody>
       @for (prescription of pagedPrescriptions(); track prescription.id) {
-        <tr [routerLink]="['/prescriptions', prescription.id]">
-          <td>{{ prescription.scid }}</td>
+        <tr class="row-link" [routerLink]="['/prescriptions', prescription.id]">
+          <td><span class="mono-chip">{{ prescription.scid }}</span></td>
           <td><app-status-badge [status]="prescription.status" /></td>
           <td>{{ prescription.createdAtUtc | date: 'medium' }}</td>
-          <td>{{ prescription.medications.length }}</td>
+          <td>
+            <span class="med-count">
+              <app-icon name="pill" [size]="13" />
+              {{ prescription.medications.length }}
+            </span>
+          </td>
         </tr>
       }
     </tbody>
@@ -86,9 +114,15 @@
 
   @if (pageCount() > 1) {
     <div class="pagination">
-      <app-button variant="secondary" [disabled]="currentPage() === 1" (clicked)="previousPage()">‹ Previous</app-button>
+      <app-button variant="secondary" [disabled]="currentPage() === 1" (clicked)="previousPage()">
+        <app-icon name="chevron-left" [size]="16" />
+        Previous
+      </app-button>
       <span class="pagination-status">Page {{ currentPage() }} of {{ pageCount() }}</span>
-      <app-button variant="secondary" [disabled]="currentPage() === pageCount()" (clicked)="nextPage()">Next ›</app-button>
+      <app-button variant="secondary" [disabled]="currentPage() === pageCount()" (clicked)="nextPage()">
+        Next
+        <app-icon name="chevron-right" [size]="16" />
+      </app-button>
     </div>
   }
 }

@@ -1,25 +1,37 @@
-<h1>Register admin</h1>
-<p class="subtitle">Create another Admin account. You'll stay signed in as yourself.</p>
-
-<form class="form" [formGroup]="form" (ngSubmit)="submit()">
-  <app-text-field
-    label="Email"
-    type="email"
-    [control]="emailControl"
-    placeholder="admin@practice.co.nz"
-    errorMessage="Enter a valid email address."
-    [fullWidth]="true"
-  />
-  <app-text-field
-    label="Password"
-    type="password"
-    [control]="passwordControl"
-    placeholder="At least 8 characters"
-    errorMessage="Password must be at least 8 characters."
-    [fullWidth]="true"
-  />
-
-  <div class="form-actions">
-    <app-button type="submit" [loading]="submitting()">Create admin account</app-button>
+<div class="page-header">
+  <div>
+    <h1>Register admin</h1>
+    <p class="page-subtitle">Create another Admin account. You'll stay signed in as yourself.</p>
   </div>
-</form>
+</div>
+
+<div class="form-card">
+  <div class="card-header">
+    <h2><app-icon name="shield" [size]="18" /> New admin account</h2>
+  </div>
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <app-text-field
+      label="Email"
+      type="email"
+      [control]="emailControl"
+      placeholder="admin@practice.co.nz"
+      errorMessage="Enter a valid email address."
+      [fullWidth]="true"
+    />
+    <app-text-field
+      label="Password"
+      type="password"
+      [control]="passwordControl"
+      placeholder="At least 8 characters"
+      errorMessage="Password must be at least 8 characters."
+      [fullWidth]="true"
+    />
+
+    <div class="form-actions">
+      <app-button type="submit" [loading]="submitting()">
+        <app-icon name="check" [size]="16" />
+        Create admin account
+      </app-button>
+    </div>
+  </form>
+</div>

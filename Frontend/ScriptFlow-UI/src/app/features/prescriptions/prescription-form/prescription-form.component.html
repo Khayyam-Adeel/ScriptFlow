@@ -1,25 +1,46 @@
+<a class="back-link" routerLink="/prescriptions">
+  <app-icon name="arrow-left" [size]="14" />
+  All prescriptions
+</a>
+
 @if (loading()) {
   <app-spinner />
 } @else {
-  <h1>{{ isEditMode ? 'Edit prescription' : 'New prescription' }}</h1>
+  <div class="page-header">
+    <div>
+      <h1>{{ isEditMode ? 'Edit prescription' : 'New prescription' }}</h1>
+      <p class="page-subtitle">
+        {{ isEditMode ? 'Only the medication lines can change once a prescription exists.' : 'Pick a patient, prescriber, and the medications to dispense.' }}
+      </p>
+    </div>
+  </div>
 
-  <section class="patient-section">
-    <h2>Patient</h2>
+  <section class="patient-section card">
+    <div class="card-header">
+      <h2><app-icon name="user" [size]="18" /> Patient</h2>
+    </div>
 
     @if (selectedPatient(); as patient) {
       <div class="selected-patient">
-        <span>{{ patient.firstName }} {{ patient.lastName }} · {{ patient.nhi }}</span>
+        <span class="avatar">{{ patient.firstName[0] }}{{ patient.lastName[0] }}</span>
+        <span class="selected-patient-name">
+          {{ patient.firstName }} {{ patient.lastName }}
+          <span class="mono-chip">{{ patient.nhi }}</span>
+        </span>
         @if (!isEditMode) {
           <button type="button" class="link-btn" (click)="clearSelectedPatient()">Change</button>
         }
       </div>
     } @else {
-      <input
-        class="patient-search"
-        type="search"
-        [formControl]="patientQuery"
-        placeholder="Search patients by name or NHI…"
-      />
+      <div class="search-box">
+        <app-icon class="search-icon" name="search" [size]="18" />
+        <input
+          class="patient-search"
+          type="search"
+          [formControl]="patientQuery"
+          placeholder="Search patients by name or NHI…"
+        />
+      </div>
       @if (patientResults().length > 0) {
         <ul class="patient-results">
           @for (patient of patientResults(); track patient.id) {
@@ -30,54 +51,138 @@
     }
   </section>
 
-  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
-    <app-select-field
-      label="Provider"
-      [control]="providerControl"
-      [options]="providerOptions()"
-      placeholder="Select a provider…"
-    />
-    <app-select-field
-      label="Practice location"
-      [control]="practiceLocationControl"
-      [options]="practiceLocationOptions()"
-      placeholder="Select a practice location…"
-    />
-
-    <div class="form-field-full">
-      <div class="medications-header">
-        <h2>Medications</h2>
-        <app-button variant="secondary" type="button" (clicked)="addMedicationLine()">+ Add medication</app-button>
-      </div>
-
-      @for (line of medications.controls; track line; let i = $index) {
-        <div class="medication-line">
-          <app-select-field
-            label="Medicine"
-            [control]="line.controls.medicineId"
-            [options]="medicineOptions()"
-            placeholder="Select a medicine…"
-            [fullWidth]="true"
-          />
-          <div class="medication-line-grid">
-            <app-text-field label="Take" [control]="line.controls.takeValue" placeholder="e.g. 1 tablet" />
-            <app-text-field label="Frequency" [control]="line.controls.frequency" placeholder="e.g. BD" />
-            <app-text-field label="Duration" [control]="line.controls.duration" placeholder="e.g. 7 days" />
-            <app-text-field label="Quantity" type="number" [control]="line.controls.quantity" />
-          </div>
-          <app-text-field label="Directions" [control]="line.controls.directions" [fullWidth]="true" />
-
-          @if (medications.length > 1) {
-            <button type="button" class="link-btn danger" (click)="removeMedicationLine(i)">Remove medication</button>
-          }
+  <form class="rx-builder" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="rx-builder-main">
+      <section class="card">
+        <div class="card-header">
+          <h2><app-icon name="stethoscope" [size]="18" /> Prescriber</h2>
         </div>
-      }
+        <div class="form">
+          <app-select-field
+            label="Provider"
+            [control]="providerControl"
+            [options]="providerOptions()"
+            placeholder="Select a provider…"
+          />
+          <app-select-field
+            label="Practice location"
+            [control]="practiceLocationControl"
+            [options]="practiceLocationOptions()"
+            placeholder="Select a practice location…"
+          />
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2><app-icon name="pill" [size]="18" /> Medications</h2>
+          <app-button variant="secondary" type="button" (clicked)="addMedicationLine()">
+            <app-icon name="plus" [size]="16" />
+            Add medication
+          </app-button>
+        </div>
+
+        @for (line of medications.controls; track line; let i = $index) {
+          <div class="medication-line">
+            <div class="medication-line-header">
+              <span class="line-number">{{ i + 1 }}</span>
+              @if (medications.length > 1) {
+                <button type="button" class="line-remove" (click)="removeMedicationLine(i)" title="Remove medication">
+                  <app-icon name="x" [size]="16" />
+                </button>
+              }
+            </div>
+            <app-select-field
+              label="Medicine"
+              [control]="line.controls.medicineId"
+              [options]="medicineOptions()"
+              placeholder="Select a medicine…"
+              [fullWidth]="true"
+            />
+            <div class="medication-line-grid">
+              <app-text-field label="Strength" [control]="line.controls.strength" placeholder="e.g. 500 mg" />
+              <app-select-field
+                label="Route"
+                [control]="line.controls.route"
+                [options]="routeOptions"
+                placeholder="Select…"
+              />
+              <app-text-field label="Take" [control]="line.controls.takeValue" placeholder="e.g. 1 tablet" />
+              <app-text-field label="Frequency" [control]="line.controls.frequency" placeholder="e.g. BD" />
+              <app-text-field label="Duration" [control]="line.controls.duration" placeholder="e.g. 7 days" />
+              <app-text-field label="Quantity" type="number" [control]="line.controls.quantity" />
+            </div>
+            <label class="prn-toggle">
+              <input type="checkbox" [formControl]="line.controls.isPrn" />
+              <span class="prn-toggle-track"><span class="prn-toggle-thumb"></span></span>
+              <span class="prn-toggle-label">PRN — take as needed</span>
+            </label>
+            <app-text-field label="Directions" [control]="line.controls.directions" [fullWidth]="true" />
+            <app-text-field label="Notes (optional)" [control]="line.controls.notes" placeholder="Note for the pharmacist or patient…" [fullWidth]="true" />
+          </div>
+        }
+      </section>
+
+      <div class="form-actions">
+        <app-button type="submit" [loading]="submitting()">
+          <app-icon name="check" [size]="16" />
+          {{ isEditMode ? 'Save changes' : 'Create prescription' }}
+        </app-button>
+      </div>
     </div>
 
-    <div class="form-actions">
-      <app-button type="submit" [loading]="submitting()">
-        {{ isEditMode ? 'Save changes' : 'Create prescription' }}
-      </app-button>
-    </div>
+    <aside class="rx-builder-aside">
+      <div class="timeline-card">
+        <div class="timeline-head">
+          <app-icon name="activity" [size]="16" />
+          <span>Medications added</span>
+          <span class="timeline-count">{{ timeline().length }}</span>
+        </div>
+
+        @if (timeline().length === 0) {
+          <div class="timeline-empty">
+            <span class="timeline-empty-icon"><app-icon name="pill" [size]="22" /></span>
+            <p>Each medication you fill in appears here as a running summary.</p>
+          </div>
+        } @else {
+          <ol class="timeline">
+            @for (entry of timeline(); track entry.index) {
+              <li class="timeline-item">
+                <span class="timeline-dot">{{ entry.index + 1 }}</span>
+                <div class="timeline-body">
+                  <div class="timeline-title">
+                    <span class="timeline-name">{{ entry.medicineName }}</span>
+                    @if (entry.strength) {
+                      <span class="timeline-strength">{{ entry.strength }}</span>
+                    }
+                    @if (entry.isPrn) {
+                      <span class="prn-badge">PRN</span>
+                    }
+                  </div>
+                  <div class="timeline-meta">
+                    @if (entry.route) {
+                      <span class="timeline-tag">{{ entry.route }}</span>
+                    }
+                    @if (entry.takeValue) {
+                      <span>{{ entry.takeValue }}</span>
+                    }
+                    @if (entry.frequency) {
+                      <span>· {{ entry.frequency }}</span>
+                    }
+                    @if (entry.duration) {
+                      <span>· {{ entry.duration }}</span>
+                    }
+                    <span class="timeline-qty">Qty {{ entry.quantity }}</span>
+                  </div>
+                  @if (entry.notes) {
+                    <p class="timeline-notes">{{ entry.notes }}</p>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </div>
+    </aside>
   </form>
 }

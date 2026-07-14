@@ -6,10 +6,16 @@
   padding: var(--space-3) var(--space-5);
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
+  font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .btn:active:not(:disabled) {
@@ -22,7 +28,7 @@
 }
 
 .primary {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   color: var(--color-text-on-primary);
   box-shadow: var(--shadow-sm);
 }
@@ -36,10 +42,12 @@
   background: var(--color-surface);
   color: var(--color-text);
   border-color: var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .secondary:hover:not(:disabled) {
   background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
 }
 
 .danger {

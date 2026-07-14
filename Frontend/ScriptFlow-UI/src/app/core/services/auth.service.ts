@@ -4,6 +4,7 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, CreatedUser } from '../models/auth-response.model';
 import { PrescriptionHubService } from './prescription-hub.service';
+import { NotificationFeedService } from './notification-feed.service';
 import { TokenStorageService } from './token-storage.service';
 
 /** Holds the current session in a signal and keeps it in sync with localStorage. */
@@ -22,6 +23,9 @@ export class AuthService {
     private readonly http: HttpClient,
     private readonly tokenStorage: TokenStorageService,
     private readonly prescriptionHub: PrescriptionHubService,
+    // Injected (not otherwise used here) so the feed is constructed at app start and begins
+    // capturing hub events immediately; also cleared on logout below.
+    private readonly notificationFeed: NotificationFeedService,
   ) {
     this.currentUser.set(this.tokenStorage.read());
 
@@ -52,6 +56,7 @@ export class AuthService {
     this.tokenStorage.clear();
     this.currentUser.set(null);
     this.prescriptionHub.stop();
+    this.notificationFeed.clear();
   }
 
   get token(): string | null {

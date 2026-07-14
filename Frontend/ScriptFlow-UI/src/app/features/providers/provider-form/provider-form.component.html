@@ -1,19 +1,34 @@
-<h1>New provider</h1>
+<a class="back-link" routerLink="/providers">
+  <app-icon name="arrow-left" [size]="14" />
+  All providers
+</a>
 
-<form class="form" [formGroup]="form" (ngSubmit)="submit()">
-  <app-text-field label="First name" [control]="firstNameControl" />
-  <app-text-field label="Last name" [control]="lastNameControl" />
-  <app-select-field label="Type" [control]="typeControl" [options]="typeOptions" />
-  <app-text-field label="NZMC number" [control]="nzmcNoControl" />
-  <app-select-field
-    label="Practice location"
-    [control]="practiceLocationControl"
-    [options]="practiceLocationOptions()"
-    placeholder="Select a practice location…"
-    [fullWidth]="true"
-  />
-
-  <div class="form-actions">
-    <app-button type="submit" [loading]="submitting()">Save provider</app-button>
+<div class="page-header">
+  <div>
+    <h1>New provider</h1>
+    <p class="page-subtitle">Add a prescriber and link them to a practice location.</p>
   </div>
-</form>
+</div>
+
+<div class="form-card">
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <app-text-field label="First name" [control]="firstNameControl" />
+    <app-text-field label="Last name" [control]="lastNameControl" />
+    <app-select-field label="Type" [control]="typeControl" [options]="typeOptions" />
+    <app-text-field label="NZMC number" [control]="nzmcNoControl" />
+    <app-select-field
+      label="Practice location"
+      [control]="practiceLocationControl"
+      [options]="practiceLocationOptions()"
+      placeholder="Select a practice location…"
+      [fullWidth]="true"
+    />
+
+    <div class="form-actions">
+      <app-button type="submit" [loading]="submitting()">
+        <app-icon name="check" [size]="16" />
+        Save provider
+      </app-button>
+    </div>
+  </form>
+</div>

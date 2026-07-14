@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ProviderService } from '../../../core/services/provider.service';
 import { PracticeLocationService } from '../../../core/services/practice-location.service';
@@ -9,11 +9,12 @@ import { PROVIDER_TYPES, ProviderType } from '../../../shared/models/provider-ty
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { TextFieldComponent } from '../../../shared/components/text-field/text-field.component';
 import { SelectFieldComponent, SelectOption } from '../../../shared/components/select-field/select-field.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-provider-form',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, TextFieldComponent, SelectFieldComponent],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, TextFieldComponent, SelectFieldComponent, IconComponent],
   templateUrl: './provider-form.component.html',
   styleUrl: './provider-form.component.css',
 })

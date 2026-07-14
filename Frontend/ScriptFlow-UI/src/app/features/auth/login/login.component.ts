@@ -5,11 +5,12 @@ import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { TextFieldComponent } from '../../../shared/components/text-field/text-field.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, TextFieldComponent],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, TextFieldComponent, IconComponent],
   templateUrl: './login.component.html',
   styleUrl: '../auth-page.css',
 })

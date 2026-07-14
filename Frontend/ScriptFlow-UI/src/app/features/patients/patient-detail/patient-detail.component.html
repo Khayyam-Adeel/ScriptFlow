@@ -1,17 +1,71 @@
+<a class="back-link" routerLink="/patients">
+  <app-icon name="arrow-left" [size]="14" />
+  All patients
+</a>
+
 @if (patient(); as patient) {
-  <div class="page-header">
-    <h1>{{ patient.firstName }} {{ patient.lastName }}</h1>
-    <app-button [routerLink]="['/prescriptions/new']" [queryParams]="{ patientId: patient.id }">
-      + New prescription
-    </app-button>
+  <div class="profile-card card">
+    <span class="avatar avatar-lg">{{ patient.firstName[0] }}{{ patient.lastName[0] }}</span>
+    <div class="profile-meta">
+      <h1>{{ patient.firstName }} {{ patient.lastName }}</h1>
+      <div class="profile-facts">
+        <span class="fact">
+          <app-icon name="id-card" [size]="16" />
+          NHI <span class="mono-chip">{{ patient.nhi }}</span>
+        </span>
+        <span class="fact">
+          <app-icon name="map-pin" [size]="16" />
+          {{ patient.address }}
+        </span>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <app-button [routerLink]="['/prescriptions/new']" [queryParams]="{ patientId: patient.id }">
+        <app-icon name="plus" [size]="16" />
+        New prescription
+      </app-button>
+    </div>
   </div>
 
-  <dl class="details">
-    <dt>NHI</dt>
-    <dd>{{ patient.nhi }}</dd>
-    <dt>Address</dt>
-    <dd>{{ patient.address }}</dd>
-  </dl>
+  <section class="history card">
+    <div class="card-header">
+      <h2><app-icon name="clipboard" [size]="18" /> Prescription history</h2>
+      @if (!prescriptionsLoading()) {
+        <span class="history-count">{{ prescriptions().length }} total</span>
+      }
+    </div>
+
+    @if (prescriptionsLoading()) {
+      <app-spinner />
+    } @else if (prescriptions().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon"><app-icon name="inbox" [size]="24" /></span>
+        <p class="empty-title">No prescriptions yet</p>
+        <p>This patient has no prescriptions on record.</p>
+      </div>
+    } @else {
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>SCID</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Medications</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prescription of prescriptions(); track prescription.id) {
+            <tr class="row-link" [routerLink]="['/prescriptions', prescription.id]">
+              <td><span class="mono-chip">{{ prescription.scid }}</span></td>
+              <td><app-status-badge [status]="prescription.status" /></td>
+              <td>{{ prescription.createdAtUtc | date: 'medium' }}</td>
+              <td>{{ prescription.medications.length }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
 } @else {
   <app-spinner />
 }

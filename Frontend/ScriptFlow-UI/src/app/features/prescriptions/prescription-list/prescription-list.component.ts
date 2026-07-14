@@ -28,6 +28,7 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SelectFieldComponent, SelectOption } from '../../../shared/components/select-field/select-field.component';
 import { TextFieldComponent } from '../../../shared/components/text-field/text-field.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 const POLL_INTERVAL_MS = 5000;
 const FILTER_DEBOUNCE_MS = 300;
@@ -51,6 +52,7 @@ const PAGE_SIZE = 15;
     StatusBadgeComponent,
     SelectFieldComponent,
     TextFieldComponent,
+    IconComponent,
   ],
   templateUrl: './prescription-list.component.html',
   styleUrl: './prescription-list.component.css',

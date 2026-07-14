@@ -23,9 +23,11 @@ BEGIN
             (@Id, @Scid, @PatientId, @ProviderId, @PracticeLocationId, @RepeatOfPrescriptionId, @InsertedBy);
 
         INSERT INTO dbo.PrescriptionMedications
-            (Id, PrescriptionId, MedicineId, TakeValue, Frequency, Duration, Quantity, Directions, InsertedBy)
+            (Id, PrescriptionId, MedicineId, TakeValue, Frequency, Duration, Quantity, Directions,
+             Route, Strength, IsPrn, Notes, InsertedBy)
         SELECT
-            m.Id, @Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions, @InsertedBy
+            m.Id, @Id, m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
+            m.Route, m.Strength, m.IsPrn, m.Notes, @InsertedBy
         FROM @Medications m;
 
         COMMIT TRANSACTION;

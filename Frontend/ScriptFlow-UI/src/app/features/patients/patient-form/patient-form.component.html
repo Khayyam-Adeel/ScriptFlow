@@ -1,17 +1,32 @@
-<h1>New patient</h1>
+<a class="back-link" routerLink="/patients">
+  <app-icon name="arrow-left" [size]="14" />
+  All patients
+</a>
 
-<form class="form" [formGroup]="form" (ngSubmit)="submit()">
-  <app-text-field label="First name" [control]="firstNameControl" />
-  <app-text-field label="Last name" [control]="lastNameControl" />
-  <app-text-field label="Address" [control]="addressControl" [fullWidth]="true" />
-  <app-text-field
-    label="NHI"
-    [control]="nhiControl"
-    placeholder="ABC1234"
-    errorMessage="NHI must be 3 letters followed by 4 digits, e.g. ABC1234."
-  />
-
-  <div class="form-actions">
-    <app-button type="submit" [loading]="submitting()">Save patient</app-button>
+<div class="page-header">
+  <div>
+    <h1>New patient</h1>
+    <p class="page-subtitle">Register a patient so prescriptions can be issued for them.</p>
   </div>
-</form>
+</div>
+
+<div class="form-card">
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <app-text-field label="First name" [control]="firstNameControl" />
+    <app-text-field label="Last name" [control]="lastNameControl" />
+    <app-text-field label="Address" [control]="addressControl" [fullWidth]="true" />
+    <app-text-field
+      label="NHI"
+      [control]="nhiControl"
+      placeholder="ABC1234"
+      errorMessage="NHI must be 3 letters followed by 4 digits, e.g. ABC1234."
+    />
+
+    <div class="form-actions">
+      <app-button type="submit" [loading]="submitting()">
+        <app-icon name="check" [size]="16" />
+        Save patient
+      </app-button>
+    </div>
+  </form>
+</div>

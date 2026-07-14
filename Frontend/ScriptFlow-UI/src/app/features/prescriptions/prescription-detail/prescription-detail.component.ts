@@ -15,6 +15,7 @@ import { statusToastKind } from '../../../shared/models/prescription-status';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SpinnerComponent } from '../../../shared/components/spinner/spinner.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 interface LifecycleStep {
   label: string;
@@ -28,7 +29,7 @@ interface LifecycleStep {
 @Component({
   selector: 'app-prescription-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, ButtonComponent, StatusBadgeComponent, SpinnerComponent],
+  imports: [RouterLink, DatePipe, ButtonComponent, StatusBadgeComponent, SpinnerComponent, IconComponent],
   templateUrl: './prescription-detail.component.html',
   styleUrl: './prescription-detail.component.css',
 })

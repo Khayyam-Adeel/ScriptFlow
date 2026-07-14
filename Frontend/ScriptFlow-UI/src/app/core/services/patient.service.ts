@@ -18,8 +18,11 @@ export class PatientService {
     return this.http.get<Patient>(`${this.baseUrl}/${id}`);
   }
 
-  /** Matches Profile.usp_Patient_Search: case-insensitive contains-match on first name, last name, or NHI. */
-  search(query: string): Observable<Patient[]> {
+  /**
+   * Matches Profile.usp_Patient_Search: case-insensitive contains-match on first name, last name,
+   * or NHI. An empty query lists all patients.
+   */
+  search(query = ''): Observable<Patient[]> {
     return this.http.get<Patient[]>(`${this.baseUrl}/search`, { params: { query } });
   }
 }

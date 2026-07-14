@@ -32,11 +32,12 @@ public sealed class PatientsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>Finds patients by name or NHI, so a prescription can be created against one of them.</summary>
+    /// <summary>Finds patients by name or NHI, so a prescription can be created against one of them.
+    /// An empty or missing query lists all patients.</summary>
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
+    public async Task<IActionResult> Search([FromQuery] string? query, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new SearchPatientsQuery(query), cancellationToken);
+        var result = await _mediator.Send(new SearchPatientsQuery(query ?? string.Empty), cancellationToken);
         return Ok(result);
     }
 }

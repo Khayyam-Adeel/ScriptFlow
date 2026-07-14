@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { TextFieldComponent } from '../../../shared/components/text-field/text-field.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 /** Admin-only: creates another Admin account (see AuthService.registerAdmin /
  * AuthController.RegisterAdmin). Stays on this page after a successful create - unlike
@@ -13,7 +14,7 @@ import { TextFieldComponent } from '../../../shared/components/text-field/text-f
 @Component({
   selector: 'app-register-admin-user',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, TextFieldComponent],
+  imports: [ReactiveFormsModule, ButtonComponent, TextFieldComponent, IconComponent],
   templateUrl: './register-admin-user.component.html',
   styleUrl: './register-admin-user.component.css',
 })

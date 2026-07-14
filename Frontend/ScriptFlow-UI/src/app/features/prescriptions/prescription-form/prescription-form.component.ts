@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import {
   FormArray,
   FormControl,
@@ -6,7 +6,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, finalize, switchMap, takeUntil } from 'rxjs';
 import { PrescriptionService } from '../../../core/services/prescription.service';
 import { PatientService } from '../../../core/services/patient.service';
@@ -20,25 +20,78 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { TextFieldComponent } from '../../../shared/components/text-field/text-field.component';
 import { SelectFieldComponent, SelectOption } from '../../../shared/components/select-field/select-field.component';
 import { SpinnerComponent } from '../../../shared/components/spinner/spinner.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 interface MedicationLineGroup {
   medicineId: FormControl<string>;
+  strength: FormControl<string>;
+  route: FormControl<string>;
   takeValue: FormControl<string>;
   frequency: FormControl<string>;
   duration: FormControl<string>;
   quantity: FormControl<number>;
+  isPrn: FormControl<boolean>;
   directions: FormControl<string>;
+  notes: FormControl<string>;
 }
+
+/** Common administration routes; the backend column is free text, so "Other" isn't needed —
+ * anything here is just a convenience shortlist. */
+export const ROUTE_OPTIONS: SelectOption[] = [
+  'Oral',
+  'Sublingual',
+  'Topical',
+  'Inhaled',
+  'Nasal',
+  'Ophthalmic',
+  'Otic',
+  'Rectal',
+  'Subcutaneous',
+  'Intramuscular',
+  'Intravenous',
+].map((route) => ({ value: route, label: route }));
 
 function buildMedicationLine(): FormGroup<MedicationLineGroup> {
   return new FormGroup<MedicationLineGroup>({
     medicineId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    strength: new FormControl('', { nonNullable: true }),
+    route: new FormControl('', { nonNullable: true }),
     takeValue: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     frequency: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     duration: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     quantity: new FormControl(1, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+    isPrn: new FormControl(false, { nonNullable: true }),
     directions: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    notes: new FormControl('', { nonNullable: true }),
   });
+}
+
+/** The raw value of one medication FormGroup — snapshotted into a signal to drive the timeline. */
+interface MedicationRaw {
+  medicineId: string;
+  strength: string;
+  route: string;
+  takeValue: string;
+  frequency: string;
+  duration: string;
+  quantity: number;
+  isPrn: boolean;
+  directions: string;
+  notes: string;
+}
+
+/** One entry rendered in the live "medications so far" timeline beside the form. */
+export interface TimelineEntry {
+  index: number;
+  medicineName: string;
+  strength: string;
+  route: string;
+  takeValue: string;
+  frequency: string;
+  duration: string;
+  quantity: number;
+  isPrn: boolean;
+  notes: string;
 }
 
 /**
@@ -49,7 +102,7 @@ function buildMedicationLine(): FormGroup<MedicationLineGroup> {
 @Component({
   selector: 'app-prescription-form',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonComponent, TextFieldComponent, SelectFieldComponent, SpinnerComponent],
+  imports: [ReactiveFormsModule, RouterLink, ButtonComponent, TextFieldComponent, SelectFieldComponent, SpinnerComponent, IconComponent],
   templateUrl: './prescription-form.component.html',
   styleUrl: './prescription-form.component.css',
 })
@@ -72,6 +125,30 @@ export class PrescriptionFormComponent implements OnDestroy {
   readonly providerOptions = signal<SelectOption[]>([]);
   readonly practiceLocationOptions = signal<SelectOption[]>([]);
   readonly medicineOptions = signal<SelectOption[]>([]);
+  readonly routeOptions = ROUTE_OPTIONS;
+
+  private readonly medicineNames = signal<Map<string, string>>(new Map());
+  private readonly medicationsSnapshot = signal<MedicationRaw[]>([]);
+
+  /** The medication lines filled in so far (a medicine has been chosen), shaped for the live
+   * timeline panel beside the form. Recomputes as the prescriber types or loads an existing Rx. */
+  readonly timeline = computed<TimelineEntry[]>(() => {
+    const names = this.medicineNames();
+    return this.medicationsSnapshot()
+      .map((line, index) => ({
+        index,
+        medicineName: names.get(line.medicineId) ?? '',
+        strength: line.strength,
+        route: line.route,
+        takeValue: line.takeValue,
+        frequency: line.frequency,
+        duration: line.duration,
+        quantity: line.quantity,
+        isPrn: line.isPrn,
+        notes: line.notes,
+      }))
+      .filter((entry) => !!entry.medicineName);
+  });
 
   readonly patientQuery = new FormControl('', { nonNullable: true });
   readonly patientResults = signal<Patient[]>([]);
@@ -110,7 +187,15 @@ export class PrescriptionFormComponent implements OnDestroy {
 
     this.medicineService.list().subscribe((medicines: Medicine[]) => {
       this.medicineOptions.set(medicines.map((m) => ({ value: m.id, label: `${m.name} (${m.form})` })));
+      this.medicineNames.set(new Map(medicines.map((m) => [m.id, m.name])));
     });
+
+    // Mirror the medication FormArray into a signal so the timeline panel re-renders live as
+    // lines are edited, added, removed, or patched in from an existing prescription.
+    this.medicationsSnapshot.set(this.medications.getRawValue());
+    this.medications.valueChanges
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe(() => this.medicationsSnapshot.set(this.medications.getRawValue()));
 
     this.patientQuery.valueChanges
       .pipe(
@@ -143,7 +228,20 @@ export class PrescriptionFormComponent implements OnDestroy {
           this.medications.clear();
           for (const medication of prescription.medications) {
             const line = buildMedicationLine();
-            line.patchValue(medication);
+            // The optional fields are nullable on the DTO but the controls are non-nullable, so
+            // coalesce null -> '' rather than pushing null into a nonNullable FormControl.
+            line.patchValue({
+              medicineId: medication.medicineId,
+              strength: medication.strength ?? '',
+              route: medication.route ?? '',
+              takeValue: medication.takeValue,
+              frequency: medication.frequency,
+              duration: medication.duration,
+              quantity: medication.quantity,
+              isPrn: medication.isPrn,
+              directions: medication.directions,
+              notes: medication.notes ?? '',
+            });
             this.medications.push(line);
           }
 

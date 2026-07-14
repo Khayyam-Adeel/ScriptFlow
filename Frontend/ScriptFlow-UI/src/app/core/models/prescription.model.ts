@@ -10,6 +10,10 @@ export interface Medication {
   duration: string;
   quantity: number;
   directions: string;
+  route: string | null;
+  strength: string | null;
+  isPrn: boolean;
+  notes: string | null;
 }
 
 // Mirrors ScriptFlow.API.Application.DTOs.MedicationLine — one medication line submitted by the client.
@@ -20,6 +24,10 @@ export interface MedicationLine {
   duration: string;
   quantity: number;
   directions: string;
+  route?: string | null;
+  strength?: string | null;
+  isPrn?: boolean;
+  notes?: string | null;
 }
 
 // Mirrors ScriptFlow.API.Application.DTOs.PrescriptionDto

@@ -8,4 +8,8 @@ public sealed record MedicationDto(
     string Frequency,
     string Duration,
     int Quantity,
-    string Directions);
+    string Directions,
+    string? Route,
+    string? Strength,
+    bool IsPrn,
+    string? Notes);

@@ -170,7 +170,8 @@ public sealed class Prescription
         }
 
         var repeatedMedications = _medications.Select(m => new PrescriptionMedication(
-            Guid.NewGuid(), m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions));
+            Guid.NewGuid(), m.MedicineId, m.TakeValue, m.Frequency, m.Duration, m.Quantity, m.Directions,
+            m.Route, m.Strength, m.IsPrn, m.Notes));
 
         return new Prescription(newId, newScid, PatientId, ProviderId, PracticeLocationId, repeatedMedications, repeatOfPrescriptionId: Id);
     }

@@ -46,11 +46,32 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'providers',
+        loadComponent: () =>
+          import('./features/providers/provider-list/provider-list.component').then(
+            (m) => m.ProviderListComponent,
+          ),
+      },
+      {
         path: 'providers/new',
         canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/providers/provider-form/provider-form.component').then(
             (m) => m.ProviderFormComponent,
+          ),
+      },
+      {
+        path: 'medicines',
+        loadComponent: () =>
+          import('./features/medicines/medicine-list/medicine-list.component').then(
+            (m) => m.MedicineListComponent,
+          ),
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/notifications/notification-center/notification-center.component').then(
+            (m) => m.NotificationCenterComponent,
           ),
       },
       {

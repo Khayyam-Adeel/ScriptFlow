@@ -25,7 +25,8 @@ public static class MappingExtensions
         var medicineName = medicinesById.TryGetValue(medication.MedicineId, out var medicine) ? medicine.Name : "Unknown";
         return new MedicationDto(
             medication.Id, medication.MedicineId, medicineName, medication.TakeValue,
-            medication.Frequency, medication.Duration, medication.Quantity, medication.Directions);
+            medication.Frequency, medication.Duration, medication.Quantity, medication.Directions,
+            medication.Route, medication.Strength, medication.IsPrn, medication.Notes);
     }
 
     public static PrescriptionDto ToDto(this Prescription prescription, IReadOnlyDictionary<Guid, Medicine> medicinesById) =>

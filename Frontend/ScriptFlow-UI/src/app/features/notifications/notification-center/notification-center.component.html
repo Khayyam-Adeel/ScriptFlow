@@ -1,0 +1,97 @@
+<div class="page-header">
+  <div>
+    <h1>Notifications</h1>
+    <p class="page-subtitle">Every prescription lifecycle event as it happens, in one place.</p>
+  </div>
+  <div class="page-actions">
+    <button class="ghost-btn" [disabled]="unreadCount() === 0" (click)="markAllRead()">
+      <app-icon name="check-check" [size]="16" />
+      Mark all read
+    </button>
+    <button class="ghost-btn danger" [disabled]="totalCount() === 0" (click)="clear()">
+      <app-icon name="trash" [size]="16" />
+      Clear
+    </button>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-tile">
+    <span class="stat-icon tint-teal"><app-icon name="bell" [size]="20" /></span>
+    <div class="stat-body">
+      <span class="stat-label">Total</span>
+      <span class="stat-value">{{ totalCount() }}</span>
+    </div>
+  </div>
+  <div class="stat-tile">
+    <span class="stat-icon tint-blue"><app-icon name="activity" [size]="20" /></span>
+    <div class="stat-body">
+      <span class="stat-label">Unread</span>
+      <span class="stat-value">{{ unreadCount() }}</span>
+    </div>
+  </div>
+  <div class="stat-tile">
+    <span class="stat-icon tint-red"><app-icon name="alert" [size]="20" /></span>
+    <div class="stat-body">
+      <span class="stat-label">Rejections</span>
+      <span class="stat-value">{{ rejectedCount() }}</span>
+    </div>
+  </div>
+</div>
+
+@if (totalCount() === 0) {
+  <div class="card empty-state">
+    <span class="empty-icon"><app-icon name="bell" [size]="24" /></span>
+    <p class="empty-title">You're all caught up</p>
+    <p>Prescription updates — signed, dispatched, acknowledged, rejected — will show up here in real time.</p>
+  </div>
+} @else {
+  @for (group of groups(); track group.label) {
+    <section class="feed-group">
+      <h2 class="feed-group-label">{{ group.label }}</h2>
+      <div class="card feed-list">
+        @for (item of group.items; track item.id) {
+          @if (item.prescriptionId) {
+            <a
+              class="feed-item"
+              [class.unread]="!item.read"
+              [routerLink]="['/prescriptions', item.prescriptionId]"
+              (click)="onItemClick(item)"
+            >
+              <ng-container *ngTemplateOutlet="body; context: { $implicit: item }" />
+            </a>
+          } @else {
+            <div class="feed-item" [class.unread]="!item.read" (click)="onItemClick(item)">
+              <ng-container *ngTemplateOutlet="body; context: { $implicit: item }" />
+            </div>
+          }
+        }
+      </div>
+    </section>
+  }
+}
+
+<ng-template #body let-item>
+  <span class="feed-icon" [class]="'tint-' + visual(item).tint">
+    <app-icon [name]="visual(item).icon" [size]="18" />
+  </span>
+  <div class="feed-content">
+    <div class="feed-title-row">
+      <span class="feed-title">{{ item.title }}</span>
+      @if (!item.read) {
+        <span class="unread-dot" title="Unread"></span>
+      }
+      <span class="feed-time">{{ relativeTime(item.timestampMs) }}</span>
+    </div>
+    <p class="feed-message">{{ item.message }}</p>
+    @if (item.prescriptionId) {
+      <span class="feed-chip">
+        <app-icon name="clipboard" [size]="12" />
+        <span class="mono-chip">{{ shortId(item.prescriptionId) }}</span>
+      </span>
+    }
+  </div>
+  <button class="feed-remove" (click)="remove($event, item.id)" title="Remove" aria-label="Remove notification">
+    <app-icon name="x" [size]="15" />
+  </button>
+</ng-template>

@@ -1,9 +1,35 @@
-<h1>Dashboard</h1>
+<div class="page-header">
+  <div>
+    <h1>{{ greeting }}{{ userName ? ', ' + userName : '' }}</h1>
+    <p class="page-subtitle">Here's what's happening across your practice today.</p>
+  </div>
+</div>
 
 <div class="quick-actions">
-  <a routerLink="/prescriptions/new" class="action-card">+ New prescription</a>
-  <a routerLink="/patients/new" class="action-card">+ New patient</a>
-  <a routerLink="/providers/new" class="action-card">+ New provider</a>
+  <a routerLink="/prescriptions/new" class="action-card action-primary">
+    <span class="action-icon"><app-icon name="clipboard" [size]="20" /></span>
+    <span class="action-text">
+      <span class="action-title">New prescription</span>
+      <span class="action-hint">Start a script for a patient</span>
+    </span>
+    <app-icon class="action-chevron" name="chevron-right" [size]="18" />
+  </a>
+  <a routerLink="/patients/new" class="action-card">
+    <span class="action-icon"><app-icon name="user" [size]="20" /></span>
+    <span class="action-text">
+      <span class="action-title">New patient</span>
+      <span class="action-hint">Register a patient record</span>
+    </span>
+    <app-icon class="action-chevron" name="chevron-right" [size]="18" />
+  </a>
+  <a routerLink="/providers/new" class="action-card">
+    <span class="action-icon"><app-icon name="stethoscope" [size]="20" /></span>
+    <span class="action-text">
+      <span class="action-title">New provider</span>
+      <span class="action-hint">Add a prescriber to the practice</span>
+    </span>
+    <app-icon class="action-chevron" name="chevron-right" [size]="18" />
+  </a>
 </div>
 
 @if (loading()) {
@@ -11,22 +37,40 @@
 } @else {
   <div class="stat-row">
     <div class="stat-tile">
-      <span class="stat-label">Total prescriptions</span>
-      <span class="stat-value">{{ totalCount() }}</span>
+      <span class="stat-icon tint-teal"><app-icon name="clipboard" [size]="20" /></span>
+      <div class="stat-body">
+        <span class="stat-label">Total prescriptions</span>
+        <span class="stat-value">{{ totalCount() }}</span>
+      </div>
     </div>
     <div class="stat-tile">
-      <span class="stat-label">Created today</span>
-      <span class="stat-value">{{ createdToday() }}</span>
+      <span class="stat-icon tint-blue"><app-icon name="trending-up" [size]="20" /></span>
+      <div class="stat-body">
+        <span class="stat-label">Created today</span>
+        <span class="stat-value">{{ createdToday() }}</span>
+      </div>
     </div>
-    <div class="stat-tile">
-      <span class="stat-label">Pending signature</span>
-      <span class="stat-value">{{ pendingCount() }}</span>
-    </div>
+    <a class="stat-tile stat-link" [routerLink]="['/prescriptions']" [queryParams]="{ status: 'Created' }">
+      <span class="stat-icon tint-amber"><app-icon name="pen" [size]="20" /></span>
+      <div class="stat-body">
+        <span class="stat-label">Pending signature</span>
+        <span class="stat-value">{{ pendingCount() }}</span>
+      </div>
+    </a>
+    <a class="stat-tile stat-link" [routerLink]="['/prescriptions']" [queryParams]="{ status: 'Rejected' }">
+      <span class="stat-icon tint-red"><app-icon name="alert" [size]="20" /></span>
+      <div class="stat-body">
+        <span class="stat-label">Rejected</span>
+        <span class="stat-value">{{ rejectedCount() }}</span>
+      </div>
+    </a>
   </div>
 
   <div class="dashboard-grid">
     <section class="panel">
-      <h2>Prescriptions by status</h2>
+      <div class="card-header">
+        <h2><app-icon name="activity" [size]="18" /> Prescriptions by status</h2>
+      </div>
       <div class="status-bars">
         @for (item of statusCounts(); track item.status) {
           <a
@@ -50,12 +94,15 @@
     </section>
 
     <section class="panel">
-      <h2>Volume, last 14 days</h2>
+      <div class="card-header">
+        <h2><app-icon name="trending-up" [size]="18" /> Volume, last 14 days</h2>
+      </div>
       @if (dailyVolume().length > 0) {
         <div class="trend-chart">
-          @for (day of dailyVolume(); track day.date) {
+          @for (day of dailyVolume(); track day.date; let last = $last) {
             <div
               class="trend-bar"
+              [class.trend-bar-today]="last"
               tabindex="0"
               [attr.title]="(day.date | date: 'EEE, MMM d') + ': ' + day.count"
               [style.height.%]="(day.count / maxDailyCount()) * 100"
@@ -67,15 +114,25 @@
           <span>Today</span>
         </div>
       } @else {
-        <p class="empty">No data yet.</p>
+        <div class="empty-state">
+          <span class="empty-icon"><app-icon name="inbox" [size]="24" /></span>
+          <p>No data yet.</p>
+        </div>
       }
     </section>
   </div>
 
   <section class="panel">
-    <h2>Recently created</h2>
+    <div class="card-header">
+      <h2><app-icon name="clock" [size]="18" /> Recently created</h2>
+      <a class="view-all" routerLink="/prescriptions">View all <app-icon name="chevron-right" [size]="14" /></a>
+    </div>
     @if (recentPrescriptions().length === 0) {
-      <p class="empty">No prescriptions yet.</p>
+      <div class="empty-state">
+        <span class="empty-icon"><app-icon name="inbox" [size]="24" /></span>
+        <p class="empty-title">No prescriptions yet</p>
+        <p>Create your first prescription to see it here.</p>
+      </div>
     } @else {
       <table class="recent-table">
         <thead>
@@ -87,8 +144,8 @@
         </thead>
         <tbody>
           @for (prescription of recentPrescriptions(); track prescription.id) {
-            <tr [routerLink]="['/prescriptions', prescription.id]">
-              <td>{{ prescription.scid }}</td>
+            <tr class="row-link" [routerLink]="['/prescriptions', prescription.id]">
+              <td><span class="mono-chip">{{ prescription.scid }}</span></td>
               <td><app-status-badge [status]="prescription.status" /></td>
               <td>{{ prescription.createdAtUtc | date: 'medium' }}</td>
             </tr>

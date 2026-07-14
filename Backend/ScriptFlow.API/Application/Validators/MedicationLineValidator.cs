@@ -13,5 +13,11 @@ public sealed class MedicationLineValidator : AbstractValidator<MedicationLine>
         RuleFor(x => x.Duration).NotEmpty();
         RuleFor(x => x.Quantity).GreaterThan(0);
         RuleFor(x => x.Directions).NotEmpty();
+
+        // Optional clinical detail - only length-bounded (matching the tvpMedicationLine / table
+        // column widths), never required.
+        RuleFor(x => x.Route).MaximumLength(100);
+        RuleFor(x => x.Strength).MaximumLength(100);
+        RuleFor(x => x.Notes).MaximumLength(1000);
     }
 }

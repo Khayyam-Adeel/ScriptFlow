@@ -1,0 +1,120 @@
+.search-box {
+  position: relative;
+  max-width: 420px;
+  margin-bottom: var(--space-5);
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) * 2 + 18px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 0.95rem;
+  font-family: inherit;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.provider-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.provider-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+}
+
+.provider-card .avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 0.95rem;
+}
+
+.provider-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.provider-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.provider-type {
+  display: inline-flex;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.type-doctor {
+  background: var(--color-primary-light);
+  color: var(--color-primary-active);
+}
+
+.type-nurse {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.type-student {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.provider-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.fact app-icon {
+  color: var(--color-text-faint);
+}

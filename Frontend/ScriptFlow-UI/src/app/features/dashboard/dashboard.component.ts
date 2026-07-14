@@ -5,9 +5,11 @@ import { RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, debounceTime, exhaustMap, forkJoin, of, startWith } from 'rxjs';
 import { PrescriptionHubService } from '../../core/services/prescription-hub.service';
 import { PrescriptionService } from '../../core/services/prescription.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Prescription, PrescriptionDailyVolume, PrescriptionStatusCount } from '../../core/models/prescription.model';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { SpinnerComponent } from '../../shared/components/spinner/spinner.component';
+import { IconComponent } from '../../shared/components/icon/icon.component';
 
 const RECENT_PRESCRIPTIONS_LIMIT = 8;
 
@@ -27,15 +29,26 @@ const RECENT_PRESCRIPTIONS_LIMIT = 8;
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, StatusBadgeComponent, SpinnerComponent],
+  imports: [RouterLink, DatePipe, StatusBadgeComponent, SpinnerComponent, IconComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent {
   private readonly prescriptionService = inject(PrescriptionService);
   private readonly prescriptionHub = inject(PrescriptionHubService);
+  private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly refresh$ = new Subject<void>();
+
+  readonly greeting = (() => {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  })();
+  readonly userName = (() => {
+    const email = this.authService.user()?.email ?? '';
+    const namePart = email.split('@')[0].split(/[._-]+/)[0];
+    return namePart ? namePart[0].toUpperCase() + namePart.slice(1) : '';
+  })();
 
   readonly statusCounts = signal<PrescriptionStatusCount[]>([]);
   readonly dailyVolume = signal<PrescriptionDailyVolume[]>([]);
@@ -49,6 +62,7 @@ export class DashboardComponent {
     const volume = this.dailyVolume();
     return volume.length > 0 ? volume[volume.length - 1].count : 0;
   });
+  readonly rejectedCount = computed(() => this.statusCounts().find((item) => item.status === 'Rejected')?.count ?? 0);
   readonly maxStatusCount = computed(() => Math.max(1, ...this.statusCounts().map((item) => item.count)));
   readonly maxDailyCount = computed(() => Math.max(1, ...this.dailyVolume().map((item) => item.count)));
 

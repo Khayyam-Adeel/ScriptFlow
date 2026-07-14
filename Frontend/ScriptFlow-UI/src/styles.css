@@ -13,7 +13,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -26,8 +26,202 @@ p {
   margin: 0 0 var(--space-2) 0;
 }
 
+h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
 a {
   color: var(--color-accent);
+}
+
+/* ---- Page scaffolding shared by every feature page ---- */
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.page-header h1 {
+  margin-bottom: var(--space-1);
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.page-actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: color var(--transition-fast);
+}
+
+.back-link:hover {
+  color: var(--color-primary);
+}
+
+/* ---- Cards ---- */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.card-header h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.card-header h2 app-icon {
+  color: var(--color-primary);
+}
+
+/* ---- Tables ---- */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border);
+}
+
+.data-table th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
+
+.data-table tbody tr.row-link {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.data-table tbody tr.row-link:hover {
+  background: var(--color-primary-soft);
+}
+
+/* ---- Small identity chips ---- */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary-active);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.avatar.avatar-lg {
+  width: 64px;
+  height: 64px;
+  font-size: 1.35rem;
+  border-radius: var(--radius-lg);
+}
+
+.mono-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 2px var(--space-2);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* ---- Empty states ---- */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.empty-state .empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-surface-muted);
+  color: var(--color-text-faint);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state .empty-title {
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 /* Form width contract: every form is capped at --form-max-width, and every field inside it
@@ -50,4 +244,14 @@ a {
   gap: var(--space-3);
   justify-content: flex-end;
   margin-top: var(--space-2);
+}
+
+/* A form page wrapped in a card, sharing the same width contract. */
+.form-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-6);
+  max-width: calc(var(--form-max-width) + 2 * var(--space-6));
 }

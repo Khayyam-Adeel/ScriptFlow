@@ -1,0 +1,53 @@
+<div class="page-header">
+  <div>
+    <h1>Medicines</h1>
+    <p class="page-subtitle">
+      @if (!loading()) {
+        {{ medicines().length }} {{ medicines().length === 1 ? 'medicine' : 'medicines' }} available for prescribing.
+      } @else {
+        Loading catalog…
+      }
+    </p>
+  </div>
+</div>
+
+<div class="search-box">
+  <app-icon class="search-icon" name="search" [size]="18" />
+  <input
+    class="search-input"
+    type="search"
+    [formControl]="queryControl"
+    placeholder="Search medicines by name…"
+  />
+</div>
+
+@if (loading()) {
+  <app-spinner />
+} @else if (medicines().length === 0) {
+  <div class="empty-state">
+    <span class="empty-icon"><app-icon name="pill" [size]="24" /></span>
+    <p class="empty-title">No medicines found</p>
+    <p>
+      @if (queryControl.value.trim()) {
+        Nothing in the catalog matches "{{ queryControl.value }}".
+      } @else {
+        The medicine catalog is empty.
+      }
+    </p>
+  </div>
+} @else {
+  <div class="medicine-grid">
+    @for (medicine of medicines(); track medicine.id) {
+      <div class="medicine-card">
+        <span class="medicine-icon"><app-icon name="pill" [size]="18" /></span>
+        <div class="medicine-meta">
+          <span class="medicine-name">{{ medicine.name }}</span>
+          <span class="medicine-form">{{ medicine.form }}</span>
+        </div>
+        <span class="medicine-sctid" title="SNOMED CT identifier">
+          SCTID <span class="mono-chip">{{ medicine.sctid }}</span>
+        </span>
+      </div>
+    }
+  </div>
+}

@@ -1,29 +1,71 @@
-<div class="auth-card">
-  <h1>ScriptFlow</h1>
-  <p class="subtitle">Create an account to start prescribing.</p>
-
-  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
-    <app-text-field
-      label="Email"
-      type="email"
-      [control]="emailControl"
-      placeholder="you@practice.co.nz"
-      errorMessage="Enter a valid email address."
-      [fullWidth]="true"
-    />
-    <app-text-field
-      label="Password"
-      type="password"
-      [control]="passwordControl"
-      placeholder="At least 8 characters"
-      errorMessage="Password must be at least 8 characters."
-      [fullWidth]="true"
-    />
-
-    <div class="form-actions">
-      <app-button type="submit" [loading]="submitting()">Create account</app-button>
+<div class="auth-showcase">
+  <div class="showcase-inner">
+    <div class="showcase-brand">
+      <span class="brand-mark"><app-icon name="pill" [size]="24" /></span>
+      <span class="brand-name">ScriptFlow</span>
     </div>
-  </form>
+    <h2 class="showcase-headline">Join your practice on ScriptFlow.</h2>
+    <p class="showcase-sub">
+      One account to prescribe, track, and collaborate — with everything your team needs in a single, calm workspace.
+    </p>
+    <ul class="showcase-features">
+      <li>
+        <span class="feature-icon"><app-icon name="clipboard" [size]="18" /></span>
+        <div>
+          <strong>Guided prescribing</strong>
+          <span>A clear, structured form for every medication line.</span>
+        </div>
+      </li>
+      <li>
+        <span class="feature-icon"><app-icon name="bell" [size]="18" /></span>
+        <div>
+          <strong>Stay in the loop</strong>
+          <span>A live notification center for every prescription event.</span>
+        </div>
+      </li>
+      <li>
+        <span class="feature-icon"><app-icon name="users" [size]="18" /></span>
+        <div>
+          <strong>Shared patient records</strong>
+          <span>Find any patient and their full prescription history fast.</span>
+        </div>
+      </li>
+    </ul>
+    <p class="showcase-foot">ScriptFlow · New Zealand prescription management</p>
+  </div>
+</div>
 
-  <p class="switch">Already have an account? <a routerLink="/login">Sign in</a></p>
+<div class="auth-main">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark"><app-icon name="pill" [size]="22" /></span>
+      <h1>ScriptFlow</h1>
+    </div>
+    <p class="subtitle">Create an account to start prescribing.</p>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <app-text-field
+        label="Email"
+        type="email"
+        [control]="emailControl"
+        placeholder="you@practice.co.nz"
+        errorMessage="Enter a valid email address."
+        [fullWidth]="true"
+      />
+      <app-text-field
+        label="Password"
+        type="password"
+        [control]="passwordControl"
+        placeholder="At least 8 characters"
+        errorMessage="Password must be at least 8 characters."
+        [fullWidth]="true"
+      />
+
+      <div class="form-actions">
+        <app-button type="submit" [loading]="submitting()">Create account</app-button>
+      </div>
+    </form>
+
+    <p class="switch">Already have an account? <a routerLink="/login">Sign in</a></p>
+  </div>
 </div>

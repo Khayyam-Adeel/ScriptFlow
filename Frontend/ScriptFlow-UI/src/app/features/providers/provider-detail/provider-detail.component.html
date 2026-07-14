@@ -1,12 +1,69 @@
-@if (provider(); as provider) {
-  <h1>{{ provider.firstName }} {{ provider.lastName }}</h1>
+<a class="back-link" routerLink="/providers">
+  <app-icon name="arrow-left" [size]="14" />
+  All providers
+</a>
 
-  <dl class="details">
-    <dt>Type</dt>
-    <dd>{{ provider.type }}</dd>
-    <dt>NZMC number</dt>
-    <dd>{{ provider.nzmcNo }}</dd>
-  </dl>
+@if (provider(); as provider) {
+  <div class="profile-card card">
+    <span class="avatar avatar-lg">{{ provider.firstName[0] }}{{ provider.lastName[0] }}</span>
+    <div class="profile-meta">
+      <h1>{{ provider.firstName }} {{ provider.lastName }}</h1>
+      <div class="profile-facts">
+        <span class="fact">
+          <app-icon name="stethoscope" [size]="16" />
+          {{ provider.type }}
+        </span>
+        <span class="fact">
+          <app-icon name="id-card" [size]="16" />
+          NZMC <span class="mono-chip">{{ provider.nzmcNo }}</span>
+        </span>
+        <span class="fact">
+          <app-icon name="building" [size]="16" />
+          {{ locationName() || '…' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <section class="history card">
+    <div class="card-header">
+      <h2><app-icon name="clipboard" [size]="18" /> Recent prescriptions</h2>
+      @if (!prescriptionsLoading()) {
+        <span class="history-count">{{ prescriptions().length }} shown</span>
+      }
+    </div>
+
+    @if (prescriptionsLoading()) {
+      <app-spinner />
+    } @else if (prescriptions().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon"><app-icon name="inbox" [size]="24" /></span>
+        <p class="empty-title">No prescriptions yet</p>
+        <p>This provider hasn't issued any prescriptions.</p>
+      </div>
+    } @else {
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>SCID</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Medications</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prescription of prescriptions(); track prescription.id) {
+            <tr class="row-link" [routerLink]="['/prescriptions', prescription.id]">
+              <td><span class="mono-chip">{{ prescription.scid }}</span></td>
+              <td><app-status-badge [status]="prescription.status" /></td>
+              <td>{{ prescription.createdAtUtc | date: 'medium' }}</td>
+              <td>{{ prescription.medications.length }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
 } @else {
   <app-spinner />
 }
