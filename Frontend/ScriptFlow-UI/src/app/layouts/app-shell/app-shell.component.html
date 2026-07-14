@@ -39,6 +39,14 @@
 
       @if (isAdmin()) {
         <span class="nav-section">Administration</span>
+        <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <app-icon name="dashboard" [size]="18" />
+          Overview
+        </a>
+        <a routerLink="/admin/practices" routerLinkActive="active">
+          <app-icon name="building" [size]="18" />
+          Practices &amp; locations
+        </a>
         <a routerLink="/admin/register-admin" routerLinkActive="active">
           <app-icon name="shield" [size]="18" />
           Admins

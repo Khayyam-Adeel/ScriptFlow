@@ -1,0 +1,136 @@
+<div class="page-header">
+  <div>
+    <h1>Admin overview</h1>
+    <p class="page-subtitle">Practices, locations, and prescription activity across the organisation.</p>
+  </div>
+</div>
+
+@if (loading()) {
+  <app-spinner />
+} @else {
+  <div class="admin-stat-row">
+    <div class="admin-stat-tile">
+      <span class="admin-stat-icon tint-teal"><app-icon name="building" [size]="20" /></span>
+      <div class="admin-stat-body">
+        <span class="admin-stat-label">Practices</span>
+        <span class="admin-stat-value">{{ practiceCount() }}</span>
+      </div>
+    </div>
+    <div class="admin-stat-tile">
+      <span class="admin-stat-icon tint-blue"><app-icon name="map-pin" [size]="20" /></span>
+      <div class="admin-stat-body">
+        <span class="admin-stat-label">Locations</span>
+        <span class="admin-stat-value">{{ locationCount() }}</span>
+      </div>
+    </div>
+    <div class="admin-stat-tile">
+      <span class="admin-stat-icon tint-teal"><app-icon name="stethoscope" [size]="20" /></span>
+      <div class="admin-stat-body">
+        <span class="admin-stat-label">Providers</span>
+        <span class="admin-stat-value">{{ providerCount() }}</span>
+      </div>
+    </div>
+    <div class="admin-stat-tile">
+      <span class="admin-stat-icon tint-blue"><app-icon name="clipboard" [size]="20" /></span>
+      <div class="admin-stat-body">
+        <span class="admin-stat-label">Total prescriptions</span>
+        <span class="admin-stat-value">{{ totalPrescriptions() }}</span>
+      </div>
+    </div>
+    <div class="admin-stat-tile">
+      <span class="admin-stat-icon tint-amber"><app-icon name="pen" [size]="20" /></span>
+      <div class="admin-stat-body">
+        <span class="admin-stat-label">Pending signature</span>
+        <span class="admin-stat-value">{{ pendingPrescriptions() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card-header">
+      <h2><app-icon name="building" [size]="18" /> Prescriptions by practice location</h2>
+    </div>
+    @if (volumeByLocation().length > 0) {
+      <div class="rank-bars">
+        @for (item of volumeByLocation(); track item.locationName) {
+          <div class="rank-bar-row" [attr.title]="item.locationName + ': ' + item.count">
+            <span class="rank-bar-label">{{ item.locationName }}</span>
+            <span class="rank-bar-track">
+              <span class="rank-bar-fill" [style.width.%]="(item.count / maxVolume()) * 100"></span>
+            </span>
+            <span class="rank-bar-count">{{ item.count }}</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <span class="empty-icon"><app-icon name="inbox" [size]="24" /></span>
+        <p>No prescriptions yet.</p>
+      </div>
+    }
+  </section>
+
+  <div class="admin-charts-grid">
+    <section class="card">
+      <div class="card-header">
+        <h2><app-icon name="map-pin" [size]="18" /> Rejection rate by location</h2>
+      </div>
+      @if (rejectionByLocation().length > 0) {
+        <div class="rank-bars">
+          @for (item of rejectionByLocation(); track item.name) {
+            <div
+              class="rank-bar-row"
+              [attr.title]="item.name + ': ' + item.rejectionRatePct + '% (' + item.rejectedCount + ' of ' + item.finalizedCount + ')'"
+            >
+              <span class="rank-bar-label">{{ item.name }}</span>
+              <span class="rank-bar-track">
+                <span
+                  class="rank-bar-fill"
+                  [class]="rateClass(item.rejectionRatePct)"
+                  [style.width.%]="item.rejectionRatePct"
+                ></span>
+              </span>
+              <span class="rank-bar-count">{{ item.rejectionRatePct }}%</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span class="empty-icon"><app-icon name="inbox" [size]="24" /></span>
+          <p>No finalized prescriptions yet.</p>
+        </div>
+      }
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2><app-icon name="stethoscope" [size]="18" /> Rejection rate by provider</h2>
+      </div>
+      @if (rejectionByProvider().length > 0) {
+        <div class="rank-bars">
+          @for (item of rejectionByProvider(); track item.name) {
+            <div
+              class="rank-bar-row"
+              [attr.title]="item.name + ': ' + item.rejectionRatePct + '% (' + item.rejectedCount + ' of ' + item.finalizedCount + ')'"
+            >
+              <span class="rank-bar-label">{{ item.name }}</span>
+              <span class="rank-bar-track">
+                <span
+                  class="rank-bar-fill"
+                  [class]="rateClass(item.rejectionRatePct)"
+                  [style.width.%]="item.rejectionRatePct"
+                ></span>
+              </span>
+              <span class="rank-bar-count">{{ item.rejectionRatePct }}%</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span class="empty-icon"><app-icon name="inbox" [size]="24" /></span>
+          <p>No finalized prescriptions yet.</p>
+        </div>
+      }
+    </section>
+  </div>
+}

@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PracticeLocation } from '../models/practice-location.model';
+import { CreatePracticeLocationRequest, PracticeLocation } from '../models/practice-location.model';
 
 /** Practice locations are near-static reference data, so the unfiltered list is cached. */
 @Injectable({ providedIn: 'root' })
@@ -22,5 +22,15 @@ export class PracticeLocationService {
     }
 
     return this.http.get<PracticeLocation[]>(this.baseUrl, { params: { practiceId } });
+  }
+
+  getById(id: string): Observable<PracticeLocation> {
+    return this.http.get<PracticeLocation>(`${this.baseUrl}/${id}`);
+  }
+
+  create(request: CreatePracticeLocationRequest): Observable<PracticeLocation> {
+    // Invalidate the cached unfiltered list so a freshly created location shows up
+    // immediately in every picker that uses list() (provider form, prescription form, etc.).
+    return this.http.post<PracticeLocation>(this.baseUrl, request).pipe(tap(() => (this.cachedList$ = null)));
   }
 }

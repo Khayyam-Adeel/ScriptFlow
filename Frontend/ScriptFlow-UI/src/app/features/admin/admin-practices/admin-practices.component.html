@@ -1,0 +1,101 @@
+<div class="page-header">
+  <div>
+    <h1>Practices &amp; locations</h1>
+    <p class="page-subtitle">Every practice and its locations across the organisation.</p>
+  </div>
+  <div class="page-actions">
+    <app-button variant="secondary" (clicked)="openNewPracticeModal()">
+      <app-icon name="plus" [size]="16" />
+      New practice
+    </app-button>
+    <app-button (clicked)="openNewLocationModal()">
+      <app-icon name="plus" [size]="16" />
+      New location
+    </app-button>
+  </div>
+</div>
+
+@if (loading()) {
+  <app-spinner />
+} @else if (practiceGroups().length === 0) {
+  <div class="empty-state">
+    <span class="empty-icon"><app-icon name="building" [size]="24" /></span>
+    <p class="empty-title">No practices yet</p>
+    <p>Create your first practice with "+ New practice".</p>
+  </div>
+} @else {
+  <div class="practice-groups">
+    @for (group of practiceGroups(); track group.practice.id) {
+      <section class="card practice-group">
+        <div class="card-header">
+          <h2><app-icon name="building" [size]="18" /> {{ group.practice.name }}</h2>
+          <span class="location-count">{{ group.locations.length }} location{{ group.locations.length === 1 ? '' : 's' }}</span>
+        </div>
+
+        @if (group.locations.length === 0) {
+          <p class="no-locations">No locations yet for this practice.</p>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Location</th>
+                <th>HPI number</th>
+                <th>Address</th>
+                <th>Phone</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (location of group.locations; track location.id) {
+                <tr>
+                  <td>{{ location.name }}</td>
+                  <td><span class="mono-chip">{{ location.hpiNumber }}</span></td>
+                  <td>{{ location.address }}</td>
+                  <td>{{ location.phone }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
+    }
+  </div>
+}
+
+@if (showNewPracticeModal()) {
+  <app-modal title="New practice" (closed)="showNewPracticeModal.set(false)">
+    <form class="form" [formGroup]="newPracticeForm" (ngSubmit)="submitNewPractice()">
+      <app-text-field label="Name" [control]="newPracticeNameControl" [fullWidth]="true" />
+      <div class="form-actions">
+        <app-button type="submit" [loading]="submitting()">
+          <app-icon name="check" [size]="16" />
+          Create practice
+        </app-button>
+      </div>
+    </form>
+  </app-modal>
+}
+
+@if (showNewLocationModal()) {
+  <app-modal title="New location" (closed)="showNewLocationModal.set(false)">
+    <form class="form" [formGroup]="newLocationForm" (ngSubmit)="submitNewLocation()">
+      <app-select-field
+        label="Practice"
+        [control]="newLocationPracticeControl"
+        [options]="practiceOptions()"
+        placeholder="Select a practice…"
+        [fullWidth]="true"
+      />
+      <app-text-field label="Name" [control]="newLocationNameControl" [fullWidth]="true" />
+      <app-text-field label="HPI No" [control]="newLocationHpiNoControl" placeholder="FZZ99" />
+      <app-text-field label="HPI Extension" [control]="newLocationHpiExtensionControl" placeholder="B" />
+      <app-text-field label="Address" [control]="newLocationAddressControl" [fullWidth]="true" />
+      <app-text-field label="Phone" [control]="newLocationPhoneControl" placeholder="+64210000000" />
+      <div class="form-actions">
+        <app-button type="submit" [loading]="submitting()">
+          <app-icon name="check" [size]="16" />
+          Create location
+        </app-button>
+      </div>
+    </form>
+  </app-modal>
+}

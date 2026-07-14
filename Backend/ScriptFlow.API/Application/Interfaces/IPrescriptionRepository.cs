@@ -28,4 +28,16 @@ public interface IPrescriptionRepository
     /// PrescriptionExpiryService's periodic sweep needs to actually call .Expire() on each one,
     /// not just count them.</summary>
     Task<IReadOnlyCollection<Prescription>> GetStaleForExpiryAsync(DateTime olderThanUtc, CancellationToken cancellationToken = default);
+
+    /// <summary>Admin overview chart: total prescription volume (all statuses) per practice
+    /// location, top 20 by volume.</summary>
+    Task<IReadOnlyCollection<LocationVolumeDto>> GetVolumeByLocationAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Admin overview chart: rejection rate of finalized (Acknowledged/Rejected)
+    /// prescriptions per practice location.</summary>
+    Task<IReadOnlyCollection<RejectionRateDto>> GetRejectionRateByLocationAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Admin overview chart: rejection rate of finalized prescriptions per provider,
+    /// top 10 by rate.</summary>
+    Task<IReadOnlyCollection<RejectionRateDto>> GetRejectionRateByProviderAsync(CancellationToken cancellationToken = default);
 }

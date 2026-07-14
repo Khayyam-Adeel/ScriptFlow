@@ -4,13 +4,15 @@ CREATE OR ALTER PROCEDURE Admin.usp_PracticeLocation_Create
     @Name         NVARCHAR(200),
     @HpiNo        CHAR(5),
     @HpiExtension CHAR(1),
+    @Address      NVARCHAR(500),
+    @Phone        NVARCHAR(20),
     @InsertedBy   UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO Admin.tblPracticeLocations (Id, PracticeId, Name, HpiNo, HpiExtension, InsertedBy)
-        VALUES (@Id, @PracticeId, @Name, @HpiNo, @HpiExtension, @InsertedBy);
+        INSERT INTO Admin.tblPracticeLocations (Id, PracticeId, Name, HpiNo, HpiExtension, Address, Phone, InsertedBy)
+        VALUES (@Id, @PracticeId, @Name, @HpiNo, @HpiExtension, @Address, @Phone, @InsertedBy);
     END TRY
     BEGIN CATCH
         INSERT INTO dbo.TblErrorLog (ID, Error, StoreProcedure, ErrorStack, InsertedAt)

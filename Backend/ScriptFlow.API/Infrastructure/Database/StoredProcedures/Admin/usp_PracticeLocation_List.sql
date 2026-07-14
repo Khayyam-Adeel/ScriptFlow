@@ -9,7 +9,9 @@ BEGIN
             PracticeId,
             Name,
             HpiNo,
-            HpiExtension
+            HpiExtension,
+            Address,
+            Phone
         FROM Admin.tblPracticeLocations WITH (NOLOCK)
         WHERE IsDeleted = 0
           AND IsActive = 1

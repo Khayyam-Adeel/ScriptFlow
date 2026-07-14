@@ -75,6 +75,22 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin-overview/admin-overview.component').then(
+            (m) => m.AdminOverviewComponent,
+          ),
+      },
+      {
+        path: 'admin/practices',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin-practices/admin-practices.component').then(
+            (m) => m.AdminPracticesComponent,
+          ),
+      },
+      {
         path: 'admin/register-admin',
         canActivate: [adminGuard],
         loadComponent: () =>

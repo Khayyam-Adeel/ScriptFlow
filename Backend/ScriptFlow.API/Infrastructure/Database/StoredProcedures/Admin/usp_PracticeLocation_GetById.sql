@@ -9,7 +9,9 @@ BEGIN
             PracticeId,
             Name,
             HpiNo,
-            HpiExtension
+            HpiExtension,
+            Address,
+            Phone
         FROM Admin.tblPracticeLocations
         WHERE Id = @Id
           AND IsDeleted = 0;
