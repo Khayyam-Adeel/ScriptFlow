@@ -20,6 +20,15 @@
     </div>
   </div>
 
+  <ol class="lifecycle-stepper">
+    @for (step of lifecycleSteps(); track step.label; let last = $last) {
+      <li class="lifecycle-step" [class]="'step-' + step.state" [class.is-last]="last">
+        <span class="step-dot"></span>
+        <span class="step-label">{{ step.label }}</span>
+      </li>
+    }
+  </ol>
+
   @if (isRejected) {
     <div class="rejection-callout">
       <span class="rejection-callout-label">Rejected by pharmacy</span>

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, finalize, forkJoin } from 'rxjs';
@@ -15,6 +15,11 @@ import { statusToastKind } from '../../../shared/models/prescription-status';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { SpinnerComponent } from '../../../shared/components/spinner/spinner.component';
+
+interface LifecycleStep {
+  label: string;
+  state: 'done' | 'current' | 'pending' | 'failed';
+}
 
 /**
  * Sign/Repeat/Edit availability mirrors Prescription.cs's state machine exactly, so this UI
@@ -60,6 +65,36 @@ export class PrescriptionDetailComponent {
   get isRejected(): boolean {
     return this.prescription()?.status === 'Rejected';
   }
+
+  /** A persistent, always-visible view of Created -> Signed -> Dispatched -> outcome, so the
+   * full lifecycle is legible regardless of how quickly (or slowly) the async Dispatch.Worker
+   * -> pharmacy -> SignalR round trip lands - a toast alone can flash by in under a second.
+   * Signed/Dispatched are derived from persisted facts (signedAtUtc, and Dispatched/
+   * Acknowledged/Rejected all require having passed through Dispatched per the state machine's
+   * own EnsureStatus checks), not just "current status", so a prescription that expired before
+   * ever being signed correctly shows Signed as never-reached rather than skipped-over. */
+  readonly lifecycleSteps = computed<LifecycleStep[]>(() => {
+    const p = this.prescription();
+    if (!p) {
+      return [];
+    }
+
+    const status = p.status;
+    const signed = p.signedAtUtc !== null;
+    const dispatched = status === 'Dispatched' || status === 'Acknowledged' || status === 'Rejected';
+    const isTerminal = status === 'Acknowledged' || status === 'Rejected' || status === 'Expired';
+
+    const outcomeLabel = status === 'Rejected' ? 'Rejected' : status === 'Expired' ? 'Expired' : 'Acknowledged';
+    const outcomeState: LifecycleStep['state'] =
+      status === 'Acknowledged' ? 'done' : status === 'Rejected' || status === 'Expired' ? 'failed' : 'pending';
+
+    return [
+      { label: 'Created', state: 'done' },
+      { label: 'Signed', state: signed ? 'done' : status === 'Created' ? 'current' : 'pending' },
+      { label: 'Dispatched', state: dispatched ? 'done' : signed ? 'current' : 'pending' },
+      { label: outcomeLabel, state: isTerminal ? outcomeState : dispatched ? 'current' : 'pending' },
+    ];
+  });
 
   constructor() {
     this.load();

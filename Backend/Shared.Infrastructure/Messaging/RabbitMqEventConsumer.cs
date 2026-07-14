@@ -21,15 +21,18 @@ public sealed class RabbitMqEventConsumer<TEvent> : IEventConsumer<TEvent>
 {
     private readonly RabbitMqOptions _options;
     private readonly RabbitMqConsumerSettings _settings;
+    private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<RabbitMqEventConsumer<TEvent>> _logger;
 
     public RabbitMqEventConsumer(
         IOptions<RabbitMqOptions> options,
         RabbitMqConsumerSettings settings,
+        IEventPublisher eventPublisher,
         ILogger<RabbitMqEventConsumer<TEvent>> logger)
     {
         _options = options.Value;
         _settings = settings;
+        _eventPublisher = eventPublisher;
         _logger = logger;
     }
 
@@ -127,6 +130,9 @@ public sealed class RabbitMqEventConsumer<TEvent> : IEventConsumer<TEvent>
                 "Could not deserialize {EventType} (delivery tag {DeliveryTag}); dead-lettering",
                 typeof(TEvent).Name, delivery.DeliveryTag);
             channel.BasicNack(delivery.DeliveryTag, multiple: false, requeue: false);
+
+            var messageId = Guid.TryParse(delivery.BasicProperties?.MessageId, out var parsedId) ? parsedId : Guid.Empty;
+            await PublishDeadLetterNotificationAsync(messageId, ex.Message, stoppingToken);
             return;
         }
 
@@ -147,7 +153,21 @@ public sealed class RabbitMqEventConsumer<TEvent> : IEventConsumer<TEvent>
                     "Handler for {EventType} ({EventId}) failed after its own retries; dead-lettering",
                     typeof(TEvent).Name, @event.EventId);
                 channel.BasicNack(delivery.DeliveryTag, multiple: false, requeue: false);
+
+                await PublishDeadLetterNotificationAsync(@event.EventId, ex.Message, stoppingToken);
             }
         }
     }
+
+    // Best-effort, same as every other publish in this codebase: RabbitMqEventPublisher already
+    // swallows its own failures (a broker outage here must not mask the *original* dead-lettering
+    // that already happened above), so this can never throw and never turns a successful
+    // dead-letter into an unhandled exception.
+    private Task PublishDeadLetterNotificationAsync(Guid failedEventId, string errorMessage, CancellationToken cancellationToken)
+        => _eventPublisher.PublishAsync(new MessageDeadLetteredEvent
+        {
+            EventType = typeof(TEvent).Name,
+            FailedEventId = failedEventId,
+            ErrorMessage = errorMessage
+        }, cancellationToken);
 }

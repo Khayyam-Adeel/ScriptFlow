@@ -17,6 +17,7 @@ public static class RabbitMqConsumerServiceCollectionExtensions
         services.AddSingleton<IEventConsumer<TEvent>>(provider => new RabbitMqEventConsumer<TEvent>(
             provider.GetRequiredService<IOptions<RabbitMqOptions>>(),
             settings,
+            provider.GetRequiredService<IEventPublisher>(),
             provider.GetRequiredService<ILogger<RabbitMqEventConsumer<TEvent>>>()));
 
         return services;

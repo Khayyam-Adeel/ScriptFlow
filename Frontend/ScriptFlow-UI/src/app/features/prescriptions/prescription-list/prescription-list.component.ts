@@ -184,6 +184,13 @@ export class PrescriptionListComponent implements OnDestroy {
     this.prescriptionHub.statusChanged$.pipe(takeUntil(this.destroyed$)).subscribe(({ prescriptionId, status }) => {
       const matched = this.prescriptions().find((p) => p.id === prescriptionId);
       if (!matched) {
+        // Not in the currently loaded page/filter (e.g. it just got created, or a filter
+        // hides it) - silently ignoring this used to mean an intermediate status like
+        // Dispatched could vanish entirely if the row wasn't loaded yet when the push
+        // arrived. Nudge the poll timer instead: restart$ triggers an immediate re-fetch
+        // (not the full refresh() - that also resets currentPage, which would be a jarring
+        // page-1 jump for a change to some *other* prescription elsewhere in the table).
+        this.restart$.next();
         return;
       }
       this.prescriptions.update((list) =>

@@ -99,6 +99,17 @@ builder.Services.AddHostedService(provider => new EventConsumerBackgroundService
     provider.GetRequiredService<IEventConsumer<PrescriptionStatusChangedEvent>>(),
     provider.GetRequiredService<PrescriptionStatusChangedEventHandler>().HandleAsync));
 
+builder.Services.AddSingleton<MessageDeadLetteredEventHandler>();
+builder.Services.AddRabbitMqConsumer<MessageDeadLetteredEvent>(new RabbitMqConsumerSettings
+{
+    QueueName = "notification.message-dead-lettered",
+    RoutingKey = nameof(MessageDeadLetteredEvent),
+    DeadLetterQueueName = "notification.message-dead-lettered.dlq"
+});
+builder.Services.AddHostedService(provider => new EventConsumerBackgroundService<MessageDeadLetteredEvent>(
+    provider.GetRequiredService<IEventConsumer<MessageDeadLetteredEvent>>(),
+    provider.GetRequiredService<MessageDeadLetteredEventHandler>().HandleAsync));
+
 builder.Services.AddSingleton<TokenRevokedEventHandler>();
 builder.Services.AddRabbitMqConsumer<TokenRevokedEvent>(new RabbitMqConsumerSettings
 {

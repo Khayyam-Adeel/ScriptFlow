@@ -9,6 +9,12 @@ export interface PrescriptionStatusChangedMessage {
   status: PrescriptionStatus;
 }
 
+export interface MessageDeadLetteredMessage {
+  eventType: string;
+  failedEventId: string;
+  errorMessage: string;
+}
+
 /**
  * Thin wrapper around a SignalR HubConnection to Notification.Service. Started on login
  * (and on app bootstrap when a session already exists), stopped on logout, so only an
@@ -18,8 +24,10 @@ export interface PrescriptionStatusChangedMessage {
 export class PrescriptionHubService {
   private connection: HubConnection | null = null;
   private readonly statusChangedSubject = new Subject<PrescriptionStatusChangedMessage>();
+  private readonly messageDeadLetteredSubject = new Subject<MessageDeadLetteredMessage>();
 
   readonly statusChanged$ = this.statusChangedSubject.asObservable();
+  readonly messageDeadLettered$ = this.messageDeadLetteredSubject.asObservable();
 
   start(getToken: () => string | null): void {
     if (this.connection) {
@@ -34,6 +42,10 @@ export class PrescriptionHubService {
 
     this.connection.on('prescriptionStatusChanged', (message: PrescriptionStatusChangedMessage) => {
       this.statusChangedSubject.next(message);
+    });
+
+    this.connection.on('messageDeadLettered', (message: MessageDeadLetteredMessage) => {
+      this.messageDeadLetteredSubject.next(message);
     });
 
     // Best-effort: a down Notification.Service shouldn't block the rest of the app, and the
