@@ -23,6 +23,14 @@
       placeholder="Select a practice location…"
       [fullWidth]="true"
     />
+    <app-text-field label="Email" type="email" [control]="emailControl" placeholder="jane.smith@example.com" />
+    <app-text-field
+      label="Phone number"
+      [control]="phoneNumberControl"
+      placeholder="021 234 5678"
+      errorMessage="Phone number must be 7-20 characters and may only contain digits, spaces, and + - ( )."
+    />
+    <app-text-field label="Qualification" [control]="qualificationControl" placeholder="MBBS" />
 
     <div class="form-actions">
       <app-button type="submit" [loading]="submitting()">

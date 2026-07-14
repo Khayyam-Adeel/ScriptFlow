@@ -42,6 +42,8 @@ public sealed class SqlPracticeLocationRepository : IPracticeLocationRepository
                 practiceLocation.Name,
                 HpiNo = practiceLocation.HpiNumber.HpiNo,
                 HpiExtension = practiceLocation.HpiNumber.HpiExtension,
+                practiceLocation.Address,
+                practiceLocation.Phone,
                 InsertedBy = _currentUser.UserId
             },
             commandType: CommandType.StoredProcedure,
@@ -61,7 +63,8 @@ public sealed class SqlPracticeLocationRepository : IPracticeLocationRepository
     }
 
     private static PracticeLocation ToEntity(PracticeLocationRow row) =>
-        new(row.Id, row.PracticeId, row.Name, new HpiNumber(row.HpiNo, row.HpiExtension));
+        new(row.Id, row.PracticeId, row.Name, new HpiNumber(row.HpiNo, row.HpiExtension), row.Address, row.Phone);
 
-    private sealed record PracticeLocationRow(Guid Id, Guid PracticeId, string Name, string HpiNo, string HpiExtension);
+    private sealed record PracticeLocationRow(
+        Guid Id, Guid PracticeId, string Name, string HpiNo, string HpiExtension, string Address, string Phone);
 }

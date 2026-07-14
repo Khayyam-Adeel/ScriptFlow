@@ -8,4 +8,7 @@ public sealed record ProviderDto(
     string LastName,
     ProviderType Type,
     string NzmcNo,
-    Guid PracticeLocationId);
+    Guid PracticeLocationId,
+    string Email,
+    string PhoneNumber,
+    string Qualification);

@@ -9,7 +9,11 @@ BEGIN
             FirstName,
             LastName,
             Address,
-            Nhi
+            Nhi,
+            DateOfBirth,
+            Gender,
+            PhoneNumber,
+            Email
         FROM Profile.tblPatients
         WHERE Id = @Id
           AND IsDeleted = 0;

@@ -11,6 +11,9 @@ import { TextFieldComponent } from '../../../shared/components/text-field/text-f
 import { SelectFieldComponent, SelectOption } from '../../../shared/components/select-field/select-field.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
 
+// Matches CreateProviderCommandValidator's phone number rule.
+const PHONE_PATTERN = /^[0-9+\-\s()]{7,20}$/;
+
 @Component({
   selector: 'app-provider-form',
   standalone: true,
@@ -34,6 +37,12 @@ export class ProviderFormComponent {
     type: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     nzmcNo: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     practiceLocationId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
+    phoneNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(PHONE_PATTERN)],
+    }),
+    qualification: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   constructor() {
@@ -67,6 +76,18 @@ export class ProviderFormComponent {
 
   get practiceLocationControl(): FormControl<string> {
     return this.form.controls.practiceLocationId;
+  }
+
+  get emailControl(): FormControl<string> {
+    return this.form.controls.email;
+  }
+
+  get phoneNumberControl(): FormControl<string> {
+    return this.form.controls.phoneNumber;
+  }
+
+  get qualificationControl(): FormControl<string> {
+    return this.form.controls.qualification;
   }
 
   submit(): void {

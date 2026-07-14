@@ -14,5 +14,14 @@ public sealed class CreatePatientCommandValidator : AbstractValidator<CreatePati
             .NotEmpty()
             .Matches("^[A-Za-z]{3}[0-9]{4}$")
             .WithMessage("NHI must be 3 letters followed by 4 digits (e.g. ABC1234).");
+        RuleFor(x => x.DateOfBirth)
+            .LessThanOrEqualTo(_ => DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Date of birth cannot be in the future.");
+        RuleFor(x => x.Gender).IsInEnum();
+        RuleFor(x => x.PhoneNumber)
+            .NotEmpty()
+            .Matches(@"^[0-9+\-\s()]{7,20}$")
+            .WithMessage("Phone number must be 7-20 characters and may only contain digits, spaces, and + - ( ).");
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
     }
 }

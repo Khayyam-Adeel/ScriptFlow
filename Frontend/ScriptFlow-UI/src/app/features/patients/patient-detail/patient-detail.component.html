@@ -17,6 +17,18 @@
           <app-icon name="map-pin" [size]="16" />
           {{ patient.address }}
         </span>
+        <span class="fact">
+          <app-icon name="calendar" [size]="16" />
+          {{ patient.dateOfBirth | date: 'mediumDate' }} · {{ patient.gender }}
+        </span>
+        <span class="fact">
+          <app-icon name="phone" [size]="16" />
+          {{ patient.phoneNumber }}
+        </span>
+        <span class="fact">
+          <app-icon name="mail" [size]="16" />
+          {{ patient.email }}
+        </span>
       </div>
     </div>
     <div class="profile-actions">

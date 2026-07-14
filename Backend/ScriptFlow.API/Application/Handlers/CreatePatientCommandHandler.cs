@@ -19,7 +19,9 @@ public sealed class CreatePatientCommandHandler : IRequestHandler<CreatePatientC
 
     public async Task<PatientDto> Handle(CreatePatientCommand request, CancellationToken cancellationToken)
     {
-        var patient = new Patient(Guid.NewGuid(), request.FirstName, request.LastName, request.Address, new Nhi(request.Nhi));
+        var patient = new Patient(
+            Guid.NewGuid(), request.FirstName, request.LastName, request.Address, new Nhi(request.Nhi),
+            request.DateOfBirth, request.Gender, request.PhoneNumber, request.Email);
         await _patients.AddAsync(patient, cancellationToken);
         return patient.ToDto();
     }

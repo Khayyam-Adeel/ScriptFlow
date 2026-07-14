@@ -5,13 +5,16 @@ CREATE OR ALTER PROCEDURE Profile.usp_Provider_Create
     @Type               TINYINT,
     @NzmcNo             NVARCHAR(20),
     @PracticeLocationId UNIQUEIDENTIFIER,
+    @Email              NVARCHAR(200),
+    @PhoneNumber        NVARCHAR(20),
+    @Qualification      NVARCHAR(200),
     @InsertedBy         UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO Profile.tblProviders (Id, FirstName, LastName, Type, NzmcNo, PracticeLocationId, InsertedBy)
-        VALUES (@Id, @FirstName, @LastName, @Type, @NzmcNo, @PracticeLocationId, @InsertedBy);
+        INSERT INTO Profile.tblProviders (Id, FirstName, LastName, Type, NzmcNo, PracticeLocationId, Email, PhoneNumber, Qualification, InsertedBy)
+        VALUES (@Id, @FirstName, @LastName, @Type, @NzmcNo, @PracticeLocationId, @Email, @PhoneNumber, @Qualification, @InsertedBy);
     END TRY
     BEGIN CATCH
         INSERT INTO dbo.TblErrorLog (ID, Error, StoreProcedure, ErrorStack, InsertedAt)

@@ -8,6 +8,9 @@ export interface Provider {
   type: ProviderType;
   nzmcNo: string;
   practiceLocationId: string;
+  email: string;
+  phoneNumber: string;
+  qualification: string;
 }
 
 // Mirrors ScriptFlow.API.Application.Commands.CreateProviderCommand
@@ -17,4 +20,7 @@ export interface CreateProviderRequest {
   type: ProviderType;
   nzmcNo: string;
   practiceLocationId: string;
+  email: string;
+  phoneNumber: string;
+  qualification: string;
 }

@@ -10,7 +10,10 @@ BEGIN
             LastName,
             Type,
             NzmcNo,
-            PracticeLocationId
+            PracticeLocationId,
+            Email,
+            PhoneNumber,
+            Qualification
         FROM Profile.tblProviders
         WHERE Id = @Id
           AND IsDeleted = 0;

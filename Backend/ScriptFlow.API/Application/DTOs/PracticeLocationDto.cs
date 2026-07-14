@@ -4,4 +4,6 @@ public sealed record PracticeLocationDto(
     Guid Id,
     Guid PracticeId,
     string Name,
-    string HpiNumber);
+    string HpiNumber,
+    string Address,
+    string Phone);

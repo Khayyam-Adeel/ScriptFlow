@@ -35,7 +35,7 @@ Wanted AS (
     SELECT p.Id AS PracticeId, p.PracticeOrdinal, n.N AS LocationOrdinal
     FROM Practices p CROSS JOIN Nums n
 )
-INSERT INTO Admin.tblPracticeLocations (Id, PracticeId, Name, HpiNo, HpiExtension, InsertedBy)
+INSERT INTO Admin.tblPracticeLocations (Id, PracticeId, Name, HpiNo, HpiExtension, Address, Phone, InsertedBy)
 SELECT
     NEWID(),
     w.PracticeId,
@@ -47,6 +47,8 @@ SELECT
         CHAR(65 + ((w.LocationOrdinal * 3) % 26))
     ) + RIGHT('0' + CAST(w.LocationOrdinal AS VARCHAR(2)), 2),
     'A',
+    CONCAT(w.PracticeOrdinal * 10 + w.LocationOrdinal, ' Test Street, Wellington ', 6000 + w.PracticeOrdinal),
+    CONCAT('+64', RIGHT('000000000' + CAST(w.PracticeOrdinal * 10 + w.LocationOrdinal AS VARCHAR(9)), 9)),
     @SystemUserId
 FROM Wanted w
 WHERE (SELECT COUNT(*) FROM Admin.tblPracticeLocations) < (@TargetPractices * @TargetLocationsPerPractice);
@@ -60,7 +62,7 @@ Nums AS (
     SELECT TOP (@TargetProviders) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS N
     FROM sys.all_objects a CROSS JOIN sys.all_objects b
 )
-INSERT INTO Profile.tblProviders (Id, FirstName, LastName, Type, NzmcNo, PracticeLocationId, InsertedBy)
+INSERT INTO Profile.tblProviders (Id, FirstName, LastName, Type, NzmcNo, PracticeLocationId, Email, PhoneNumber, Qualification, InsertedBy)
 SELECT
     NEWID(),
     CONCAT('Provider', n.N),
@@ -68,6 +70,9 @@ SELECT
     0, -- Doctor
     CONCAT('NZMC', RIGHT('000000' + CAST(n.N AS VARCHAR(6)), 6)),
     l.Id,
+    CONCAT('provider', n.N, '@scriptflow.test'),
+    CONCAT('027', RIGHT('0000000' + CAST(n.N AS VARCHAR(7)), 7)),
+    'MBBS',
     @SystemUserId
 FROM Nums n
 JOIN Locations l ON l.LocationOrdinal = ((n.N - 1) % l.LocationCount) + 1
@@ -78,7 +83,7 @@ WHERE (SELECT COUNT(*) FROM Profile.tblProviders) < @TargetProviders;
     SELECT TOP (@TargetPatients) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS N
     FROM sys.all_objects a CROSS JOIN sys.all_objects b
 )
-INSERT INTO Profile.tblPatients (Id, FirstName, LastName, Address, Nhi, InsertedBy)
+INSERT INTO Profile.tblPatients (Id, FirstName, LastName, Address, Nhi, DateOfBirth, Gender, PhoneNumber, Email, InsertedBy)
 SELECT
     NEWID(),
     CONCAT('Patient', N),
@@ -90,6 +95,11 @@ SELECT
         CHAR(65 + ((N / 26) % 26)),
         CHAR(65 + ((N / 676) % 26))
     ) + RIGHT('0000' + CAST(N % 10000 AS VARCHAR(4)), 4),
+    -- Deterministic DOB spread across ages 18-79, PhoneNumber/Email/Gender likewise from N.
+    DATEADD(YEAR, -(18 + (N % 62)), CAST(SYSUTCDATETIME() AS DATE)),
+    N % 3,
+    CONCAT('027', RIGHT('0000000' + CAST(N AS VARCHAR(7)), 7)),
+    CONCAT('patient', N, '@scriptflow.test'),
     @SystemUserId
 FROM Nums
 WHERE (SELECT COUNT(*) FROM Profile.tblPatients) < @TargetPatients;

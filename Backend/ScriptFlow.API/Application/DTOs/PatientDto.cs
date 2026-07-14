@@ -1,3 +1,5 @@
+using Shared.contract.Enums;
+
 namespace ScriptFlow.API.Application.DTOs;
 
 public sealed record PatientDto(
@@ -5,4 +7,8 @@ public sealed record PatientDto(
     string FirstName,
     string LastName,
     string Address,
-    string Nhi);
+    string Nhi,
+    DateOnly DateOfBirth,
+    Gender Gender,
+    string PhoneNumber,
+    string Email);

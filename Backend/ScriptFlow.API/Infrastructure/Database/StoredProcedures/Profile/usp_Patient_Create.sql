@@ -1,16 +1,20 @@
 CREATE OR ALTER PROCEDURE Profile.usp_Patient_Create
-    @Id         UNIQUEIDENTIFIER,
-    @FirstName  NVARCHAR(100),
-    @LastName   NVARCHAR(100),
-    @Address    NVARCHAR(500),
-    @Nhi        CHAR(7),
-    @InsertedBy UNIQUEIDENTIFIER
+    @Id          UNIQUEIDENTIFIER,
+    @FirstName   NVARCHAR(100),
+    @LastName    NVARCHAR(100),
+    @Address     NVARCHAR(500),
+    @Nhi         CHAR(7),
+    @DateOfBirth DATE,
+    @Gender      TINYINT,
+    @PhoneNumber NVARCHAR(20),
+    @Email       NVARCHAR(200),
+    @InsertedBy  UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO Profile.tblPatients (Id, FirstName, LastName, Address, Nhi, InsertedBy)
-        VALUES (@Id, @FirstName, @LastName, @Address, @Nhi, @InsertedBy);
+        INSERT INTO Profile.tblPatients (Id, FirstName, LastName, Address, Nhi, DateOfBirth, Gender, PhoneNumber, Email, InsertedBy)
+        VALUES (@Id, @FirstName, @LastName, @Address, @Nhi, @DateOfBirth, @Gender, @PhoneNumber, @Email, @InsertedBy);
     END TRY
     BEGIN CATCH
         INSERT INTO dbo.TblErrorLog (ID, Error, StoreProcedure, ErrorStack, InsertedAt)

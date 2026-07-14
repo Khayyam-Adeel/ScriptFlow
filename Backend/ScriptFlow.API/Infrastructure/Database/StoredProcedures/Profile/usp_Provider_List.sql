@@ -10,7 +10,10 @@ BEGIN
             LastName,
             Type,
             NzmcNo,
-            PracticeLocationId
+            PracticeLocationId,
+            Email,
+            PhoneNumber,
+            Qualification
         FROM Profile.tblProviders WITH (NOLOCK)
         WHERE IsDeleted = 0
           AND IsActive = 1

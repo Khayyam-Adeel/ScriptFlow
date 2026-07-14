@@ -78,7 +78,11 @@ public sealed class PrimaryWorkflowIntegrationTests : IClassFixture<ScriptFlowAp
             firstName = "Integration",
             lastName = "Patient",
             address = "1 Test Street",
-            nhi
+            nhi,
+            dateOfBirth = "1990-01-01",
+            gender = "Female",
+            phoneNumber = "0271234567",
+            email = $"integration-patient-{runId}@example.com"
         });
         patientResponse.EnsureSuccessStatusCode();
         var patient = await patientResponse.Content.ReadFromJsonAsync<PatientDto>(JsonOptions);

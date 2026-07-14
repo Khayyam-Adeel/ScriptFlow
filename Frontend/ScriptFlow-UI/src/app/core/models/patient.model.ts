@@ -1,3 +1,5 @@
+import { Gender } from '../../shared/models/gender';
+
 // Mirrors ScriptFlow.API.Application.DTOs.PatientDto
 export interface Patient {
   id: string;
@@ -5,6 +7,10 @@ export interface Patient {
   lastName: string;
   address: string;
   nhi: string;
+  dateOfBirth: string;
+  gender: Gender;
+  phoneNumber: string;
+  email: string;
 }
 
 // Mirrors ScriptFlow.API.Application.Commands.CreatePatientCommand
@@ -13,4 +19,8 @@ export interface CreatePatientRequest {
   lastName: string;
   address: string;
   nhi: string;
+  dateOfBirth: string;
+  gender: Gender;
+  phoneNumber: string;
+  email: string;
 }

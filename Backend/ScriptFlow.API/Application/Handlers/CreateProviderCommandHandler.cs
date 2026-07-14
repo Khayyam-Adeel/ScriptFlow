@@ -25,7 +25,8 @@ public sealed class CreateProviderCommandHandler : IRequestHandler<CreateProvide
             ?? throw new EntityNotFoundException("PracticeLocation", request.PracticeLocationId);
 
         var provider = new Provider(
-            Guid.NewGuid(), request.FirstName, request.LastName, request.Type, request.NzmcNo, request.PracticeLocationId);
+            Guid.NewGuid(), request.FirstName, request.LastName, request.Type, request.NzmcNo, request.PracticeLocationId,
+            request.Email, request.PhoneNumber, request.Qualification);
 
         await _providers.AddAsync(provider, cancellationToken);
         return provider.ToDto();

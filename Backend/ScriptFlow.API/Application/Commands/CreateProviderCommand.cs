@@ -9,4 +9,7 @@ public sealed record CreateProviderCommand(
     string LastName,
     ProviderType Type,
     string NzmcNo,
-    Guid PracticeLocationId) : IRequest<ProviderDto>;
+    Guid PracticeLocationId,
+    string Email,
+    string PhoneNumber,
+    string Qualification) : IRequest<ProviderDto>;

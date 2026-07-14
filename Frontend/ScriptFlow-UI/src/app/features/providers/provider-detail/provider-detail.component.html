@@ -21,6 +21,18 @@
           <app-icon name="building" [size]="16" />
           {{ locationName() || '…' }}
         </span>
+        <span class="fact">
+          <app-icon name="mail" [size]="16" />
+          {{ provider.email }}
+        </span>
+        <span class="fact">
+          <app-icon name="phone" [size]="16" />
+          {{ provider.phoneNumber }}
+        </span>
+        <span class="fact">
+          <app-icon name="id-card" [size]="16" />
+          {{ provider.qualification }}
+        </span>
       </div>
     </div>
   </div>
