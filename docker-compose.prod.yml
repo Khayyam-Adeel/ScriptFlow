@@ -48,6 +48,7 @@ services:
   dispatch-worker:
     environment:
       DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__ScriptFlowDb: "Server=sqlserver;Database=ScriptFlow;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
       RabbitMq__UserName: "${RABBITMQ_USER}"
       RabbitMq__Password: "${RABBITMQ_PASSWORD}"
     restart: unless-stopped

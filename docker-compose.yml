@@ -97,6 +97,7 @@ services:
       dockerfile: Backend/Dispatch.Worker/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__ScriptFlowDb: "Server=sqlserver;Database=ScriptFlow;User Id=sa;Password=Your_password123;TrustServerCertificate=True"
       RabbitMq__HostName: rabbitmq
       RabbitMq__Port: "5672"
       RabbitMq__UserName: guest
@@ -105,6 +106,8 @@ services:
       PharmacyGateway__BaseUrl: "http://pharmacy-gateway:8080"
       PharmacyGateway__TimeoutSeconds: "10"
     depends_on:
+      db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
       pharmacy-gateway:
