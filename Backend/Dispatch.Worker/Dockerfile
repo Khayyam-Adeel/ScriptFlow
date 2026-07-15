@@ -4,9 +4,11 @@
 # that live alongside it under Backend/.
 #
 # This is a plain Worker Service (no Kestrel/HTTP endpoint), so unlike the API
-# projects there is no EXPOSE / ASPNETCORE_URLS here.
+# projects there is no EXPOSE / ASPNETCORE_URLS here. It still needs the ASP.NET
+# Core runtime (not just dotnet/runtime) because Shared.Infrastructure references
+# Microsoft.AspNetCore.* (health checks / DI extensions).
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
