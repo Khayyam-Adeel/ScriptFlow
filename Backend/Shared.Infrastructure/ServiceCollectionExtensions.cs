@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
 
         services.Configure<Messaging.RabbitMqOptions>(configuration.GetSection(Messaging.RabbitMqOptions.SectionName));
         services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+        services.AddSingleton<IDlqRedriveService, RabbitMqDlqRedriveService>();
 
         services.AddSingleton<IRevokedTokenStore, InMemoryRevokedTokenStore>();
 
