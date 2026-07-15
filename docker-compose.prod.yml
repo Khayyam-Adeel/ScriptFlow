@@ -1,0 +1,68 @@
+# Production override for the EC2 deployment. Use together with the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# What this changes vs. local dev:
+#  - Real secrets come from a .env file on the server (never committed) instead of
+#    the hardcoded dev password/signing key.
+#  - sqlserver/rabbitmq/pharmacy-gateway/scriptflow-api/notification-service stop
+#    publishing ports to the internet - only nginx (scriptflow-ui, port 80) is
+#    public. Everything else talks over the internal compose network.
+#    Requires Docker Compose >= 2.24 for the `!override` merge tag.
+#  - restart: unless-stopped so the stack survives an instance reboot.
+#  - SQL Server memory capped so it doesn't get OOM-killed on a small instance.
+
+services:
+  sqlserver:
+    environment:
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+      MSSQL_MEMORY_LIMIT_MB: "2048"
+    ports: !override []
+    restart: unless-stopped
+
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
+    ports: !override []
+    restart: unless-stopped
+
+  db-init:
+    environment:
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+
+  pharmacy-gateway:
+    ports: !override []
+    restart: unless-stopped
+
+  scriptflow-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__ScriptFlowDb: "Server=sqlserver;Database=ScriptFlow;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY}"
+      RabbitMq__UserName: "${RABBITMQ_USER}"
+      RabbitMq__Password: "${RABBITMQ_PASSWORD}"
+      Cors__AllowedOrigins__0: "http://${PUBLIC_HOST}"
+    ports: !override []
+    restart: unless-stopped
+
+  dispatch-worker:
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      RabbitMq__UserName: "${RABBITMQ_USER}"
+      RabbitMq__Password: "${RABBITMQ_PASSWORD}"
+    restart: unless-stopped
+
+  notification-service:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__SigningKey: "${JWT_SIGNING_KEY}"
+      RabbitMq__UserName: "${RABBITMQ_USER}"
+      RabbitMq__Password: "${RABBITMQ_PASSWORD}"
+      Cors__AllowedOrigins__0: "http://${PUBLIC_HOST}"
+    ports: !override []
+    restart: unless-stopped
+
+  scriptflow-ui:
+    ports:
+      - "80:80"
+    restart: unless-stopped

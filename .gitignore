@@ -4,6 +4,12 @@ obj/
 *.user
 TestResults/
 
+## Deployment secrets
+.env
+.env.prod
+infra/terraform.tfstate*
+infra/.terraform/
+
 ## Visual Studio
 .vs/
 
