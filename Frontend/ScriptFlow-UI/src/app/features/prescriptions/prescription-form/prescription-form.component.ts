@@ -54,19 +54,40 @@ export const ROUTE_OPTIONS: SelectOption[] = [
   'Intravenous',
 ].map((route) => ({ value: route, label: route }));
 
+/** Whole numbers only - matches MedicationLineValidator.cs, which rejects fractional
+ * Quantity/Repeats at the API, so catch it client-side too rather than round-tripping. */
+const INTEGER_PATTERN = /^[0-9]+$/;
+
+/** TakeValue/Duration are free text ("1 tablet", "7 days") - MedicineLine.TakeValue/Duration
+ * are NVARCHAR(100), so the unit is never split out. Require a leading whole number so the
+ * dose/day count itself is still structured, and leave the rest (unit, wording) as free string. */
+const LEADING_INTEGER_PATTERN = /^[0-9]+\D*$/;
+
 function buildMedicationLine(): FormGroup<MedicationLineGroup> {
   return new FormGroup<MedicationLineGroup>({
     medicineId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    strength: new FormControl('', { nonNullable: true }),
-    route: new FormControl('', { nonNullable: true }),
-    takeValue: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    strength: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(100)] }),
+    route: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(100)] }),
+    takeValue: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(LEADING_INTEGER_PATTERN)],
+    }),
     frequency: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    duration: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    quantity: new FormControl(1, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+    duration: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(LEADING_INTEGER_PATTERN)],
+    }),
+    quantity: new FormControl(1, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(INTEGER_PATTERN), Validators.min(1)],
+    }),
     isPrn: new FormControl(false, { nonNullable: true }),
     directions: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    notes: new FormControl('', { nonNullable: true }),
-    repeats: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
+    notes: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
+    repeats: new FormControl(0, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(INTEGER_PATTERN), Validators.min(0)],
+    }),
   });
 }
 

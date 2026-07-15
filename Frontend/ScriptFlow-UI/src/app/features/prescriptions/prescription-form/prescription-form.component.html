@@ -100,18 +100,43 @@
               [fullWidth]="true"
             />
             <div class="medication-line-grid">
-              <app-text-field label="Strength" [control]="line.controls.strength" placeholder="e.g. 500 mg" />
+              <app-text-field
+                label="Strength"
+                [control]="line.controls.strength"
+                placeholder="e.g. 500 mg"
+                errorMessage="Strength must be 100 characters or fewer."
+              />
               <app-select-field
                 label="Route"
                 [control]="line.controls.route"
                 [options]="routeOptions"
                 placeholder="Select…"
               />
-              <app-text-field label="Take" [control]="line.controls.takeValue" placeholder="e.g. 1 tablet" />
+              <app-text-field
+                label="Take"
+                [control]="line.controls.takeValue"
+                placeholder="e.g. 1 tablet"
+                errorMessage="Take must start with a whole number, e.g. 1 tablet."
+              />
               <app-text-field label="Frequency" [control]="line.controls.frequency" placeholder="e.g. BD" />
-              <app-text-field label="Duration" [control]="line.controls.duration" placeholder="e.g. 7 days" />
-              <app-text-field label="Quantity" type="number" [control]="line.controls.quantity" />
-              <app-text-field label="Repeats" type="number" [control]="line.controls.repeats" />
+              <app-text-field
+                label="Duration"
+                [control]="line.controls.duration"
+                placeholder="e.g. 7 days"
+                errorMessage="Duration must start with a whole number of days, e.g. 7 days."
+              />
+              <app-text-field
+                label="Quantity"
+                type="number"
+                [control]="line.controls.quantity"
+                errorMessage="Quantity must be a whole number of 1 or more."
+              />
+              <app-text-field
+                label="Repeats"
+                type="number"
+                [control]="line.controls.repeats"
+                errorMessage="Repeats must be a whole number of 0 or more."
+              />
             </div>
             <label class="prn-toggle">
               <input type="checkbox" [formControl]="line.controls.isPrn" />
@@ -119,7 +144,13 @@
               <span class="prn-toggle-label">PRN — take as needed</span>
             </label>
             <app-text-field label="Directions" [control]="line.controls.directions" [fullWidth]="true" />
-            <app-text-field label="Notes (optional)" [control]="line.controls.notes" placeholder="Note for the pharmacist or patient…" [fullWidth]="true" />
+            <app-text-field
+              label="Notes (optional)"
+              [control]="line.controls.notes"
+              placeholder="Note for the pharmacist or patient…"
+              [fullWidth]="true"
+              errorMessage="Notes must be 1000 characters or fewer."
+            />
           </div>
         }
       </section>
