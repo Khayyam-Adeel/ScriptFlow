@@ -112,6 +112,8 @@ CREATE TYPE [dbo].[tvpMedicationLine] AS TABLE (
     [Strength]   NVARCHAR (100)   NULL,
     [IsPrn]      BIT              NOT NULL,
     [Notes]      NVARCHAR (1000)  NULL,
+    [Repeats]     INT             NOT NULL DEFAULT ((0)),
+    [RepeatsUsed] INT             NOT NULL DEFAULT ((0)),
     PRIMARY KEY CLUSTERED ([Id] ASC));
 
 
