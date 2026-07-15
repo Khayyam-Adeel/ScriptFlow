@@ -203,6 +203,21 @@ public sealed class Prescription
         Status = PrescriptionStatus.Signed;
     }
 
+    /// <summary>
+    /// Manual recovery for a prescription stuck at Dispatched - e.g. Dispatch.Worker's pharmacy
+    /// call exhausted its retries and the delivery never actually completed (see
+    /// PrescriptionSignedEventHandler). Rewinds to Signed rather than staying at Dispatched so
+    /// that when Dispatch.Worker attempts delivery again, PrescriptionDispatchedEventHandler's
+    /// own Dispatch() call (which requires Signed) succeeds cleanly instead of finding the
+    /// aggregate already Dispatched and dead-lettering a harmless-but-noisy duplicate.
+    /// </summary>
+    public void RequestRedispatch()
+    {
+        EnsureStatus(PrescriptionStatus.Dispatched, "redispatch");
+
+        Status = PrescriptionStatus.Signed;
+    }
+
     private void EnsureStatus(PrescriptionStatus required, string action)
     {
         if (Status != required)

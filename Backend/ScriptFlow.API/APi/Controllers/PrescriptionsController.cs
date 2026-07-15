@@ -50,6 +50,15 @@ public sealed class PrescriptionsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Manual retry for a prescription stuck at Dispatched (e.g. the pharmacy call
+    /// permanently failed) - only valid while Status is still Dispatched.</summary>
+    [HttpPost("{id:guid}/redispatch")]
+    public async Task<IActionResult> Redispatch(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new RedispatchPrescriptionCommand(id), cancellationToken);
+        return Ok(result);
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {

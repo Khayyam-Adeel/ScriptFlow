@@ -46,6 +46,11 @@ export class PrescriptionService {
     return this.http.post<Prescription>(`${this.baseUrl}/${id}/repeat`, {});
   }
 
+  /** Manual retry for a prescription stuck at Dispatched - see RedispatchPrescriptionCommandHandler. */
+  redispatch(id: string): Observable<Prescription> {
+    return this.http.post<Prescription>(`${this.baseUrl}/${id}/redispatch`, {});
+  }
+
   getById(id: string): Observable<Prescription> {
     return this.http.get<Prescription>(`${this.baseUrl}/${id}`);
   }

@@ -40,6 +40,7 @@ public sealed class ExceptionHandlingMiddleware
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Unauthorized"),
             EntityNotFoundException => (HttpStatusCode.NotFound, "Not found"),
             InvalidPrescriptionStateException => (HttpStatusCode.Conflict, "Invalid state"),
+            DuplicateNhiException => (HttpStatusCode.Conflict, "Duplicate NHI"),
             DomainException => (HttpStatusCode.BadRequest, "Invalid request"),
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred")
         };

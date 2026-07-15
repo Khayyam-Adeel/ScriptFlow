@@ -1,7 +1,9 @@
 using System.Data;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using ScriptFlow.API.Application.Interfaces;
 using ScriptFlow.API.Domain.Entities;
+using ScriptFlow.API.Domain.Exceptions;
 using ScriptFlow.API.Domain.ValueObjects;
 using ScriptFlow.API.Infrastructure.Database;
 using Shared.contract.Enums;
@@ -34,23 +36,34 @@ public sealed class SqlPatientRepository : IPatientRepository
     public async Task AddAsync(Patient patient, CancellationToken cancellationToken = default)
     {
         using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition(
-            "Profile.usp_Patient_Create",
-            new
-            {
-                patient.Id,
-                patient.FirstName,
-                patient.LastName,
-                patient.Address,
-                Nhi = patient.Nhi.Value,
-                DateOfBirth = patient.DateOfBirth.ToDateTime(TimeOnly.MinValue),
-                Gender = (byte)patient.Gender,
-                patient.PhoneNumber,
-                patient.Email,
-                InsertedBy = _currentUser.UserId
-            },
-            commandType: CommandType.StoredProcedure,
-            cancellationToken: cancellationToken));
+        try
+        {
+            await connection.ExecuteAsync(new CommandDefinition(
+                "Profile.usp_Patient_Create",
+                new
+                {
+                    patient.Id,
+                    patient.FirstName,
+                    patient.LastName,
+                    patient.Address,
+                    Nhi = patient.Nhi.Value,
+                    DateOfBirth = patient.DateOfBirth.ToDateTime(TimeOnly.MinValue),
+                    Gender = (byte)patient.Gender,
+                    patient.PhoneNumber,
+                    patient.Email,
+                    InsertedBy = _currentUser.UserId
+                },
+                commandType: CommandType.StoredProcedure,
+                cancellationToken: cancellationToken));
+        }
+        // Error 2627 = unique constraint violation. The stored proc's TRY/CATCH logs and rethrows
+        // the raw SqlException as-is, so this is the first place that can recognize "it was
+        // specifically UQ_Patients_Nhi" and turn it into a message the caller can act on, instead
+        // of a generic 500.
+        catch (SqlException ex) when (ex.Number == 2627 && ex.Message.Contains("UQ_Patients_Nhi", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new DuplicateNhiException(patient.Nhi.Value);
+        }
     }
 
     public async Task<IReadOnlyCollection<Patient>> SearchAsync(string query, CancellationToken cancellationToken = default)

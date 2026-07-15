@@ -120,6 +120,12 @@ export class PrescriptionDetailComponent {
     return this.prescription()?.status === 'Rejected';
   }
 
+  /** Only offered while still Dispatched - once it moves to Acknowledged/Rejected/Expired the
+   * pharmacy has already answered (or it's been swept up as stale) and there's nothing to retry. */
+  get canRedispatch(): boolean {
+    return this.prescription()?.status === 'Dispatched';
+  }
+
   /** A persistent, always-visible view of Created -> Signed -> Dispatched -> outcome, so the
    * full lifecycle is legible regardless of how quickly (or slowly) the async Dispatch.Worker
    * -> pharmacy -> SignalR round trip lands - a toast alone can flash by in under a second.
@@ -231,6 +237,25 @@ export class PrescriptionDetailComponent {
       .subscribe((updated) => {
         this.prescription.set(updated);
         this.notifications.success('Repeat dispense requested.');
+      });
+  }
+
+  /** Only meaningful while genuinely stuck (the pharmacy call never got an answer, e.g. it
+   * permanently failed after Dispatch.Worker's own retries) - confirmed first since clicking it
+   * while the original attempt is still legitimately in flight would send the prescription to
+   * the pharmacy a second time. */
+  redispatch(): void {
+    if (!confirm('Resend this prescription to the pharmacy? Only do this if you\'re sure the original attempt failed.')) {
+      return;
+    }
+
+    this.actionInFlight.set(true);
+    this.prescriptionService
+      .redispatch(this.prescriptionId)
+      .pipe(finalize(() => this.actionInFlight.set(false)))
+      .subscribe((updated) => {
+        this.prescription.set(updated);
+        this.notifications.success('Prescription resent to the pharmacy.');
       });
   }
 

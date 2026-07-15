@@ -38,6 +38,12 @@
           Create replacement prescription
         </app-button>
       }
+      @if (canRedispatch) {
+        <app-button variant="secondary" [loading]="actionInFlight()" (clicked)="redispatch()">
+          <app-icon name="send" [size]="16" />
+          Resend to pharmacy
+        </app-button>
+      }
     </div>
   </div>
 

@@ -24,7 +24,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         notifications.error(
           error.status === 403
             ? "You don't have permission to do that."
-            : 'Something went wrong. Please try again.',
+            : (problem?.detail ?? problem?.title ?? 'Something went wrong. Please try again.'),
         );
       }
 
