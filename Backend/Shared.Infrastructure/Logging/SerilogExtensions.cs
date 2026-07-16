@@ -13,5 +13,10 @@ public static class SerilogExtensions
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("Service", serviceName)
-            .WriteTo.Console(outputTemplate: OutputTemplate);
+            .WriteTo.Console(outputTemplate: OutputTemplate)
+            .WriteTo.File(
+                path: $"Logs/{serviceName}-.log",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14,
+                outputTemplate: OutputTemplate);
 }
