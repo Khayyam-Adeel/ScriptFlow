@@ -95,6 +95,7 @@
         <th>Status</th>
         <th>Created</th>
         <th>Medications</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -110,6 +111,18 @@
               <app-icon name="pill" [size]="13" />
               {{ prescription.medications.length }}
             </span>
+          </td>
+          <td (click)="$event.stopPropagation()">
+            @if (prescription.status === 'Dispatched') {
+              <app-button
+                variant="secondary"
+                [disabled]="redispatchingIds().has(prescription.id)"
+                (clicked)="redispatch(prescription)"
+              >
+                <app-icon name="send" [size]="14" />
+                Retry
+              </app-button>
+            }
           </td>
         </tr>
       }

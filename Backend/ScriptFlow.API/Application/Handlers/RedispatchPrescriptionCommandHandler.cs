@@ -41,6 +41,17 @@ public sealed class RedispatchPrescriptionCommandHandler : IRequestHandler<Redis
         var prescription = await _prescriptions.GetByIdAsync(request.PrescriptionId, cancellationToken)
             ?? throw new EntityNotFoundException("Prescription", request.PrescriptionId);
 
+        // A Dispatched prescription should always have gone through Sign() first, which sets
+        // SignedAtUtc - but data that reached Dispatched by some other means (e.g. a direct DB
+        // edit) can leave it null. Check before RequestRedispatch()/UpdateAsync() below, which
+        // would otherwise commit the Dispatched -> Signed transition and then have nothing left
+        // to re-trigger the dispatch pipeline once PrescriptionSignedEvent fails to build.
+        if (prescription.SignedAtUtc is null)
+        {
+            throw new InvalidPrescriptionStateException(
+                $"Prescription {prescription.Id} is Dispatched but has no SignedAtUtc and cannot be redispatched.");
+        }
+
         // Throws InvalidPrescriptionStateException (-> 409) unless currently Dispatched.
         prescription.RequestRedispatch();
         await _prescriptions.UpdateAsync(prescription, cancellationToken);

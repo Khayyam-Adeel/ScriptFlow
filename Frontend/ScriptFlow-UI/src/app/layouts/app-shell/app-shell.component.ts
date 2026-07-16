@@ -7,14 +7,13 @@ import { AuthService } from '../../core/services/auth.service';
 import { PrescriptionHubService } from '../../core/services/prescription-hub.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { NotificationFeedService } from '../../core/services/notification-feed.service';
-import { ToastComponent } from '../../shared/components/toast/toast.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 
 /** Top nav + side nav shell wrapped around every authenticated route. */
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, ToastComponent, IconComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, IconComponent],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.css',
 })

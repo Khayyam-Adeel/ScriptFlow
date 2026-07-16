@@ -9,6 +9,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   exhaustMap,
+  finalize,
   merge,
   startWith,
   switchMap,
@@ -69,6 +70,9 @@ export class PrescriptionListComponent implements OnDestroy {
 
   readonly prescriptions = signal<Prescription[]>([]);
   readonly loading = signal(true);
+  // Rows with a redispatch request in flight, so the button can disable/spin per-row without
+  // blocking the rest of the table.
+  readonly redispatchingIds = signal<ReadonlySet<string>>(new Set());
 
   // Client-side over the already-capped (TOP 200, see usp_Prescription_List) result set - the
   // API never returns more than that in one response, so there's no need for a server round trip
@@ -260,6 +264,31 @@ export class PrescriptionListComponent implements OnDestroy {
 
   nextPage(): void {
     this.goToPage(this.currentPage() + 1);
+  }
+
+  /** Mirrors prescription-detail's redispatch() for a prescription stuck at Dispatched, without
+   * having to leave the list to drill into the detail page first. */
+  redispatch(prescription: Prescription): void {
+    if (!confirm(`Resend ${prescription.scid} to the pharmacy? Only do this if you're sure the original attempt failed.`)) {
+      return;
+    }
+
+    this.redispatchingIds.update((ids) => new Set(ids).add(prescription.id));
+    this.prescriptionService
+      .redispatch(prescription.id)
+      .pipe(
+        finalize(() =>
+          this.redispatchingIds.update((ids) => {
+            const next = new Set(ids);
+            next.delete(prescription.id);
+            return next;
+          }),
+        ),
+      )
+      .subscribe((updated) => {
+        this.prescriptions.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
+        this.notifications.success(`${prescription.scid} resent to the pharmacy.`);
+      });
   }
 
   private refresh(): void {
