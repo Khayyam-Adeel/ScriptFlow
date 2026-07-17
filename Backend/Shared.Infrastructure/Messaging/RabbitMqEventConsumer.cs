@@ -97,9 +97,14 @@ public sealed class RabbitMqEventConsumer<TEvent> : IEventConsumer<TEvent>
         channel.ExchangeDeclare(_options.ExchangeName, ExchangeType.Topic, durable: true);
 
         // Dead-letter exchange + queue: where a message ends up once this consumer Nacks it.
-        channel.ExchangeDeclare(_settings.DeadLetterExchangeName, ExchangeType.Fanout, durable: true);
+        // Topic (not Fanout), bound with this consumer's own routing key - every service shares
+        // the same DeadLetterExchangeName, and RabbitMQ preserves a message's original routing
+        // key when dead-lettering it, so binding on that key (instead of Fanout's "deliver to
+        // every bound queue regardless of key") is what keeps each consumer's DLQ holding only
+        // its own failures instead of every service's dead letters mixed together.
+        channel.ExchangeDeclare(_settings.DeadLetterExchangeName, ExchangeType.Topic, durable: true);
         channel.QueueDeclare(_settings.DeadLetterQueueName, durable: true, exclusive: false, autoDelete: false);
-        channel.QueueBind(_settings.DeadLetterQueueName, _settings.DeadLetterExchangeName, routingKey: string.Empty);
+        channel.QueueBind(_settings.DeadLetterQueueName, _settings.DeadLetterExchangeName, _settings.RoutingKey);
 
         // The main queue: pointing it at the DLX above is what makes a Nack(requeue:false)
         // land in the dead-letter queue automatically, with no extra code on our part.

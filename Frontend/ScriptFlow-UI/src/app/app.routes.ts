@@ -99,6 +99,12 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'admin/dlq',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin-dlq/admin-dlq.component').then((m) => m.AdminDlqComponent),
+      },
+      {
         path: 'providers/:id',
         loadComponent: () =>
           import('./features/providers/provider-detail/provider-detail.component').then(

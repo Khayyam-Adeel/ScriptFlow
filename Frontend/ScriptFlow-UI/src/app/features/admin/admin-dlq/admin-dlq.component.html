@@ -1,0 +1,129 @@
+<div class="page-header">
+  <div>
+    <h1>Dead-letter queues</h1>
+    <p class="page-subtitle">
+      Every prescription-lifecycle event that permanently failed to process - a dropped pharmacy
+      call, a worker crash, or anything else that exhausted its retries lands here instead of
+      being silently lost.
+    </p>
+  </div>
+  <div class="page-actions">
+    <app-button variant="secondary" (clicked)="load()">
+      <app-icon name="repeat" [size]="16" />
+      Refresh
+    </app-button>
+  </div>
+</div>
+
+@if (loading()) {
+  <app-spinner />
+} @else {
+  @if (totalStuck() === 0) {
+    <div class="empty-state">
+      <span class="empty-icon"><app-icon name="check-circle" [size]="24" /></span>
+      <p class="empty-title">Nothing stuck</p>
+      <p>Every dead-letter queue is empty right now.</p>
+    </div>
+  } @else {
+    <div class="summary-banner card">
+      <app-icon name="alert" [size]="18" />
+      <span><strong>{{ totalStuck() }}</strong> message{{ totalStuck() === 1 ? '' : 's' }} across all dead-letter queues need attention.</span>
+    </div>
+  }
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Queue</th>
+        <th>Stuck messages</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (queue of queues(); track queue.queueName) {
+        <tr [class.row-selected]="selectedQueue() === queue.queueName">
+          <td>{{ queueLabel(queue.queueName) }}</td>
+          <td>
+            @if (queue.messageCount > 0) {
+              <span class="count-badge count-badge-warn">{{ queue.messageCount }}</span>
+            } @else {
+              <span class="count-badge">0</span>
+            }
+          </td>
+          <td class="row-actions">
+            <app-button
+              variant="secondary"
+              [disabled]="queue.messageCount === 0"
+              (clicked)="viewMessages(queue.queueName)"
+            >
+              <app-icon name="search" [size]="14" />
+              View
+            </app-button>
+            <app-button
+              variant="danger"
+              [disabled]="queue.messageCount === 0"
+              [loading]="redrivingQueue() === queue.queueName"
+              (clicked)="redrive(queue.queueName)"
+            >
+              <app-icon name="send" [size]="14" />
+              Redrive all
+            </app-button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@if (selectedQueue(); as queueName) {
+  <div class="card message-panel">
+    <div class="card-header">
+      <h2>{{ queueLabel(queueName) }}</h2>
+      <button type="button" class="link-btn" (click)="closeMessages()">Close</button>
+    </div>
+
+    @if (messagesLoading()) {
+      <app-spinner />
+    } @else if (messages().length === 0) {
+      <p class="no-locations">No messages found (they may have just been redriven elsewhere).</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Prescription</th>
+            <th>Failure reason</th>
+            <th>Failed at</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (message of messages(); track message.messageId ?? $index) {
+            <tr>
+              <td><span class="mono-chip">{{ message.eventType }}</span></td>
+              <td>
+                @if (message.prescriptionId) {
+                  <a [routerLink]="['/prescriptions', message.prescriptionId]">{{ message.scid ?? message.prescriptionId }}</a>
+                } @else {
+                  —
+                }
+              </td>
+              <td>{{ message.failureReason ?? '—' }}</td>
+              <td>{{ message.failedAtUtc ? (message.failedAtUtc | date: 'medium') : '—' }}</td>
+              <td>
+                <button type="button" class="link-btn" (click)="togglePayload(message.messageId, $index)">
+                  {{ isPayloadExpanded(message.messageId, $index) ? 'Hide payload' : 'View payload' }}
+                </button>
+              </td>
+            </tr>
+            @if (isPayloadExpanded(message.messageId, $index)) {
+              <tr class="payload-row">
+                <td colspan="5"><pre class="payload">{{ message.payloadJson }}</pre></td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}

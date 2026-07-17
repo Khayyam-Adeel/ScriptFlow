@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScriptFlow.API.Application.Commands;
+using ScriptFlow.API.Application.Queries;
 using Shared.contract.Enums;
 
 namespace ScriptFlow.API.Api.Controllers;
@@ -16,6 +17,30 @@ public sealed class AdminController : ControllerBase
     public AdminController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    /// <summary>
+    /// Message count for every known dead-letter queue - the overview an admin's "dead-letter
+    /// queues" page lists before drilling into any one queue.
+    /// </summary>
+    [HttpGet("dlq")]
+    public async Task<IActionResult> GetDeadLetterQueues(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetDeadLetterQueueSummaryQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Non-destructively inspects up to <paramref name="count"/> messages in one dead-letter
+    /// queue - each message is requeued after reading, so this never consumes what a later
+    /// redrive would process.
+    /// </summary>
+    [HttpGet("dlq/{queueName}/messages")]
+    public async Task<IActionResult> PeekDeadLetterQueueMessages(
+        string queueName, [FromQuery] int count = 50, CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new PeekDeadLetterQueueMessagesQuery(queueName, count), cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
