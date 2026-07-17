@@ -21,6 +21,10 @@ export class SelectFieldComponent {
   @Input() placeholder = 'Select…';
   @Input() errorMessage = '';
   @Input() fullWidth = false;
+  // Most consumers use the placeholder as a "must pick a real value" prompt, so it stays
+  // disabled once a real option is chosen. A filter like prescription-list's status dropdown
+  // instead treats blank as a genuine, reselectable state ("All statuses") - set true there.
+  @Input() placeholderSelectable = false;
 
   get showError(): boolean {
     return this.control.invalid && (this.control.dirty || this.control.touched);
