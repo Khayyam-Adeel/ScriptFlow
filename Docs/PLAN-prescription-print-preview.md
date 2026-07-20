@@ -1,5 +1,10 @@
 # Prescription print preview
 
+**Status: Implemented.** Verified in code — `shared/components/barcode/barcode.component.ts`
+(from-scratch Code128 encoder), `shared/components/modal/modal.component.ts`, and
+`features/prescriptions/prescription-print/` all exist, wired into both the
+post-create flow and a "Print" button on the prescription detail page.
+
 ## Context
 
 The user wants a print preview to pop up whenever a prescription is created, before it's

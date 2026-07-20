@@ -132,9 +132,10 @@ deploy above is working and you want to stop SSHing in by hand.
 
 Why one VM: your compose file already orchestrates everything (healthchecks,
 db-init ordering, networking). Reusing it means the EC2 box behaves exactly like
-the intended local environment — and since Docker Desktop never ran locally (WSL2
-missing), this will actually be the **first end-to-end run of the compose wiring**.
-Budget time for first-deploy debugging.
+the intended local environment — and since `docker compose up` still hasn't been
+run end-to-end locally (Docker Desktop + WSL2 are installed, but the daemon isn't
+reliably responsive on this machine yet), this will actually be the **first
+end-to-end run of the compose wiring**. Budget time for first-deploy debugging.
 
 Start with `t3.small` + 2 GB swap + `MSSQL_MEMORY_LIMIT_MB=1536`; resize to
 `t3.medium` in Terraform (one line) if SQL Server gets OOM-killed.

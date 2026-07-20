@@ -92,9 +92,9 @@ CQRS via **MediatR**, with **FluentValidation** run as a pipeline behavior:
   `SqlPracticeRepository`, `SqlPracticeLocationRepository`, `SqlUserRepository`), each
   implementing an `Application/Interfaces` contract and calling stored procedures via **Dapper**
   (`Database/ISqlConnectionFactory` / `SqlConnectionFactory`). The stored procedures themselves
-  live under `Infrastructure/Database/StoredProcedures/<Schema>/` (see §8 — these `.sql` files
-  are no longer tracked in git as of a recent commit; treat the schema in
-  `SPEC/DatabaseSpec.md` as the reference instead). The project previously used in-memory
+  live under `Infrastructure/Database/StoredProcedures/<Schema>/` (see §8) and are tracked in
+  git alongside the schema script — `SPEC/DatabaseSpec.md` documents the same schema in prose
+  form for quick reference. The project previously used in-memory
   repositories (`InMemory*Repository`) seeded at startup; those have been removed in favor of
   the SQL-backed implementations.
 - **Auth** (`Auth/`): `JwtTokenGenerator` (issues bearer tokens), `PasswordHasher` (wraps
@@ -132,7 +132,7 @@ pharmacy gateway you also build — it must randomly delay, ack, nack, and drop 
 Design rationale is captured in
 [`Backend/Dispatch.Worker/IMPLEMENTATION_PLAN.md`](Backend/Dispatch.Worker/IMPLEMENTATION_PLAN.md);
 requirements in [`Backend/Dispatch.Worker/DeliveryServiceSpec.md`](Backend/Dispatch.Worker/DeliveryServiceSpec.md)
-(this file was moved out of `SPEC/` into the worker's own folder and is untracked in git).
+(this file was moved out of `SPEC/` into the worker's own folder; it is tracked in git there).
 
 **Flow:**
 
@@ -241,6 +241,9 @@ you need to know *why* something is shaped the way it is, not just *what* it is.
 | `Backend/Dispatch.Worker/DeliveryServiceSpec.md` | `Dispatch.Worker` requirements (consume, dispatch, retry, DLQ, idempotency, publish outcome) |
 | `Backend/*/IMPLEMENTATION_PLAN.md` | Design/implementation plans for `ScriptFlow.API` and `Dispatch.Worker`, written before each was built — includes assumptions resolved with the project owner and a verification checklist |
 | `Frontend/FrontEndSpec.md` | UI/UX intent for `ScriptFlow-UI` |
+| `Docs/PLAN-*.md` | Feature-addition plans (patient/provider fields, prescription print preview, admin console enrichment) — all three are now marked **Implemented** at the top; kept as the design record, not rewritten after the fact |
+| `Docs/DEMO_GUIDE.md` | Speaker notes/Q&A for presenting the project |
+| `Docs/AWS-DEPLOYMENT.md` | AWS EC2 deployment path (manual SSH deploy + a Terraform/GitHub Actions upgrade path) |
 | `Prompts/Prompts.md` | The literal prompts used to drive each build pass (plan-mode API build, database design, dispatch worker planning, stored-procedure generation) — a log of how this codebase was actually produced |
 | `Skills/BackendSkill.md` | A reusable prompt for stored-procedure generation conventions (schema-qualified naming, `TRY/CATCH` + `dbo.TblErrorLog` logging, `NOLOCK`, join-then-filter ordering) |
 

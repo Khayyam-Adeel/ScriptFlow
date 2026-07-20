@@ -1,5 +1,10 @@
 # Enrich the Admin section
 
+**Status: Implemented.** Verified in code — `PracticesController`/`PracticeLocationsController`
+Create endpoints, the three `usp_Reporting_*` procedures, and the frontend's
+`features/admin/admin-overview/` + `features/admin/admin-practices/` (alongside the
+pre-existing `admin-dlq/` and `register-admin-user/`) all exist and are wired up.
+
 ## Context
 
 Today "Admin" is a single nav link ("Admins") to one form: register a new admin user

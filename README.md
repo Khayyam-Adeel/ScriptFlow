@@ -57,9 +57,9 @@ Notification.Service ──SignalR──▶ browser (live status board)
 - SQL Server reachable locally (or update the connection string)
 - RabbitMQ reachable locally (or update the `RabbitMq` config section)
 - Docker Desktop — **optional**. The repo ships Dockerfiles and a
-  `docker-compose.yml` for every service (see §4.2), but they have not been run
-  locally, since Docker Desktop isn't installed on our office Windows machines
-  under current IT policy. See [ADR-004](#adr-004-ship-docker-support-without-being-able-to-run-it-locally).
+  `docker-compose.yml` for every service (see §4.2). Docker Desktop + WSL2 are now
+  installed on this machine, but `docker compose up` itself has not yet been run
+  end-to-end here. See [ADR-004](#adr-004-ship-docker-support-without-being-able-to-run-it-locally).
 
 ## 3. Repository layout
 
@@ -75,7 +75,7 @@ Backend/
 Frontend/
   ScriptFlow-UI/           Angular 18 SPA
 SPEC/                      Source-of-truth requirements docs
-docker-compose.yml         Full-stack orchestration (untested locally, see ADR-004)
+docker-compose.yml         Full-stack orchestration (Docker installed, not yet run end-to-end, see ADR-004)
 ScriptFlow.sln
 ```
 
@@ -108,7 +108,7 @@ ScriptFlow.sln
    ```
    Angular CLI dev server on `http://localhost:4200`.
 
-### 4.2 Docker-ready (prepared for future use — see ADR-004)
+### 4.2 Docker-ready (installed, not yet run end-to-end — see ADR-004)
 
 Every backend service has a `Dockerfile` (build context is the **repo root**, since
 each project references the `Shared.*` class libraries next to it), and the frontend
@@ -125,9 +125,10 @@ Build a single image directly:
 docker build -f Backend/ScriptFlow.API/Dockerfile -t scriptflow-api .
 ```
 
-This path is **not yet exercised** in this environment (no local Docker runtime
-available) — treat `docker-compose.yml`'s passwords/ports/env vars as a documented
-starting point to validate once Docker is available, not a proven config.
+This path is **not yet exercised** in this environment — Docker Desktop and WSL2 are
+now installed, but `docker compose up` hasn't been run end-to-end yet — treat
+`docker-compose.yml`'s passwords/ports/env vars as a documented starting point to
+validate on first run, not a proven config.
 
 ### 4.3 Smoke test (either path)
 
@@ -316,10 +317,10 @@ the most likely issues), not an already-proven deployment path.
 
 **Update:** the underlying reason `docker-compose.yml` remains unverified narrowed
 since this ADR was written — Docker Desktop is now installed on this machine, but
-its daemon can't start because WSL2 itself isn't installed (`wsl --install` needs
-admin rights and a restart, neither available here). What *did* become verifiable
-without Docker is the database bootstrap `docker-compose.yml`'s `db-init` service
-runs (`Infrastructure/Database/Schema/00_CreateSchema.sql`,
+its daemon couldn't start because WSL2 itself wasn't installed (`wsl --install` needs
+admin rights and a restart, neither available at the time). What *did* become
+verifiable without Docker is the database bootstrap `docker-compose.yml`'s `db-init`
+service runs (`Infrastructure/Database/Schema/00_CreateSchema.sql`,
 `01_SeedSystemUser.sql`, every `StoredProcedures/*.sql`, then
 `Performance/01_ExpandLookupData.sql`) — each was run in that exact order against a
 real, brand-new SQL Server database (not a container, but the same SQL Server
@@ -327,6 +328,14 @@ engine) and produced a working, fully-seeded schema. So the piece most likely to
 be wrong (the SQL itself) is now confirmed correct; what's still unverified is
 narrower - purely the container orchestration around it (healthchecks, service
 dependency ordering, container networking).
+
+**Update (2026-07-20):** WSL2 and Docker Desktop are now both installed on this
+machine. The Docker daemon is still not reliably responsive here (`docker ps` hangs
+intermittently), and `docker compose up` has not yet been run end-to-end — so the
+container orchestration itself (healthchecks, service dependency ordering, container
+networking) remains the one piece of this ADR still genuinely unverified, same as
+before, just for a narrower reason now (daemon reliability on this machine, not a
+missing prerequisite).
 
 ## 7. Security
 

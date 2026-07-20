@@ -1,5 +1,10 @@
 # Add fields to Patient & Provider registration
 
+**Status: Implemented.** Verified in code — `Domain/Entities/Patient.cs` carries
+`DateOfBirth`/`Gender`/`PhoneNumber`/`Email`, `Domain/Entities/Provider.cs` carries
+`Email`/`PhoneNumber`/`Qualification`, all the way through the DB schema, stored
+procedures, DTOs, and the Angular forms/detail pages described below.
+
 ## Context
 
 The Patient registration form only collects First name/Last name/Address/NHI, and

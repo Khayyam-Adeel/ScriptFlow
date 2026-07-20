@@ -164,6 +164,7 @@ CREATE TABLE Lookup.tblMedicines
     Name        NVARCHAR(300)    NOT NULL,
     Sctid       NVARCHAR(20)     NOT NULL,
     Form        NVARCHAR(100)    NOT NULL,
+    Type        NVARCHAR(10)     NULL,
     IsActive    BIT              NOT NULL CONSTRAINT DF_Medicines_IsActive DEFAULT (1),
     IsDeleted   BIT              NOT NULL CONSTRAINT DF_Medicines_IsDeleted DEFAULT (0),
     InsertedAt  DATETIME2(3)     NOT NULL CONSTRAINT DF_Medicines_InsertedAt DEFAULT SYSUTCDATETIME(),
@@ -175,6 +176,48 @@ CREATE TABLE Lookup.tblMedicines
     CONSTRAINT FK_Medicines_UpdatedBy_Users FOREIGN KEY (UpdatedBy) REFERENCES Profile.tblUsers (Id),
     CONSTRAINT UQ_Medicines_Sctid UNIQUE (Sctid)
 );
+-- Type: the NZULM classification the medicine was sourced from (TPUU/TPP/MPP/MPUU),
+-- nullable because it's only populated for medicines imported from that source.
+
+CREATE TABLE Lookup.tblForm
+(
+    Id          UNIQUEIDENTIFIER NOT NULL CONSTRAINT DF_Form_Id DEFAULT NEWID(),
+    Name        NVARCHAR(100)    NOT NULL,
+    Sctid       NVARCHAR(20)     NULL,
+    IsActive    BIT              NOT NULL CONSTRAINT DF_Form_IsActive DEFAULT (1),
+    IsDeleted   BIT              NOT NULL CONSTRAINT DF_Form_IsDeleted DEFAULT (0),
+    InsertedAt  DATETIME2(3)     NOT NULL CONSTRAINT DF_Form_InsertedAt DEFAULT SYSUTCDATETIME(),
+    UpdatedAt   DATETIME2(3)     NULL,
+    InsertedBy  UNIQUEIDENTIFIER NOT NULL,
+    UpdatedBy   UNIQUEIDENTIFIER NULL,
+    CONSTRAINT PK_Form PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT UQ_Form_Name UNIQUE (Name),
+    CONSTRAINT FK_Form_InsertedBy_Users FOREIGN KEY (InsertedBy) REFERENCES Profile.tblUsers (Id),
+    CONSTRAINT FK_Form_UpdatedBy_Users FOREIGN KEY (UpdatedBy) REFERENCES Profile.tblUsers (Id)
+);
+
+CREATE TABLE Lookup.tblMedicineForm
+(
+    Id          UNIQUEIDENTIFIER NOT NULL CONSTRAINT DF_MedicineForm_Id DEFAULT NEWID(),
+    MedicineId  UNIQUEIDENTIFIER NOT NULL,
+    FormId      UNIQUEIDENTIFIER NOT NULL,
+    IsActive    BIT              NOT NULL CONSTRAINT DF_MedicineForm_IsActive DEFAULT (1),
+    IsDeleted   BIT              NOT NULL CONSTRAINT DF_MedicineForm_IsDeleted DEFAULT (0),
+    InsertedAt  DATETIME2(3)     NOT NULL CONSTRAINT DF_MedicineForm_InsertedAt DEFAULT SYSUTCDATETIME(),
+    UpdatedAt   DATETIME2(3)     NULL,
+    InsertedBy  UNIQUEIDENTIFIER NOT NULL,
+    UpdatedBy   UNIQUEIDENTIFIER NULL,
+    CONSTRAINT PK_MedicineForm PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT UQ_MedicineForm_Medicine_Form UNIQUE (MedicineId, FormId),
+    CONSTRAINT FK_MedicineForm_Medicines FOREIGN KEY (MedicineId) REFERENCES Lookup.tblMedicines (Id),
+    CONSTRAINT FK_MedicineForm_Forms FOREIGN KEY (FormId) REFERENCES Lookup.tblForm (Id),
+    CONSTRAINT FK_MedicineForm_InsertedBy_Users FOREIGN KEY (InsertedBy) REFERENCES Profile.tblUsers (Id),
+    CONSTRAINT FK_MedicineForm_UpdatedBy_Users FOREIGN KEY (UpdatedBy) REFERENCES Profile.tblUsers (Id)
+);
+-- Normalizes the many-to-many between a medicine and its dosage form(s) (a medicine
+-- can have more than one form mapping, e.g. "injection" + "injection: solution").
+-- tblMedicines.Form still carries a single primary form string for display; this
+-- table is the source of truth for the full set.
 
 CREATE TABLE Prescription.tblPrescriptions
 (
