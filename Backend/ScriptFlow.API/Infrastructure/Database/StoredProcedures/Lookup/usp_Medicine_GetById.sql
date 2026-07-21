@@ -8,7 +8,8 @@ BEGIN
             Id,
             Name,
             Sctid,
-            Form
+            Form,
+            Type
         FROM Lookup.tblMedicines
         WHERE Id = @Id
           AND IsDeleted = 0;

@@ -12,7 +12,8 @@ BEGIN
             Id,
             Name,
             Sctid,
-            Form
+            Form,
+            Type
         FROM Lookup.tblMedicines WITH (NOLOCK)
         WHERE IsDeleted = 0
           AND IsActive = 1

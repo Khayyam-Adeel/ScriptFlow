@@ -60,5 +60,5 @@ public sealed class SqlMedicineRepository : IMedicineRepository
 
     private static Medicine ToEntity(MedicineRow row) => new(row.Id, row.Name, row.Sctid, row.Form);
 
-    private sealed record MedicineRow(Guid Id, string Name, string Sctid, string Form);
+    private sealed record MedicineRow(Guid Id, string Name, string Sctid, string Form, string? Type);
 }

@@ -10,7 +10,8 @@ BEGIN
             m.Id,
             m.Name,
             m.Sctid,
-            m.Form
+            m.Form,
+            m.Type
         FROM Lookup.tblMedicines m
         INNER JOIN @Ids i ON i.Id = m.Id
         WHERE m.IsDeleted = 0;

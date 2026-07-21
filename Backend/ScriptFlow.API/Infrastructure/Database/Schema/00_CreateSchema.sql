@@ -169,6 +169,7 @@ CREATE TABLE [Lookup].[tblMedicines] (
     [Name]       NVARCHAR (300)   NOT NULL,
     [Sctid]      NVARCHAR (20)    NOT NULL,
     [Form]       NVARCHAR (100)   NOT NULL,
+    [Type]       NVARCHAR (10)    NULL,
     [IsActive]   BIT              NOT NULL,
     [IsDeleted]  BIT              NOT NULL,
     [InsertedAt] DATETIME2 (3)    NOT NULL,
@@ -177,6 +178,46 @@ CREATE TABLE [Lookup].[tblMedicines] (
     [UpdatedBy]  UNIQUEIDENTIFIER NULL,
     CONSTRAINT [PK_Medicines] PRIMARY KEY CLUSTERED ([Id] ASC),
     CONSTRAINT [UQ_Medicines_Sctid] UNIQUE NONCLUSTERED ([Sctid] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [Lookup].[tblForm]...';
+
+
+GO
+CREATE TABLE [Lookup].[tblForm] (
+    [Id]         UNIQUEIDENTIFIER NOT NULL,
+    [Name]       NVARCHAR (100)   NOT NULL,
+    [Sctid]      NVARCHAR (20)    NULL,
+    [IsActive]   BIT              NOT NULL,
+    [IsDeleted]  BIT              NOT NULL,
+    [InsertedAt] DATETIME2 (3)    NOT NULL,
+    [UpdatedAt]  DATETIME2 (3)    NULL,
+    [InsertedBy] UNIQUEIDENTIFIER NOT NULL,
+    [UpdatedBy]  UNIQUEIDENTIFIER NULL,
+    CONSTRAINT [PK_Form] PRIMARY KEY CLUSTERED ([Id] ASC),
+    CONSTRAINT [UQ_Form_Name] UNIQUE NONCLUSTERED ([Name] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [Lookup].[tblMedicineForm]...';
+
+
+GO
+CREATE TABLE [Lookup].[tblMedicineForm] (
+    [Id]         UNIQUEIDENTIFIER NOT NULL,
+    [MedicineId] UNIQUEIDENTIFIER NOT NULL,
+    [FormId]     UNIQUEIDENTIFIER NOT NULL,
+    [IsActive]   BIT              NOT NULL,
+    [IsDeleted]  BIT              NOT NULL,
+    [InsertedAt] DATETIME2 (3)    NOT NULL,
+    [UpdatedAt]  DATETIME2 (3)    NULL,
+    [InsertedBy] UNIQUEIDENTIFIER NOT NULL,
+    [UpdatedBy]  UNIQUEIDENTIFIER NULL,
+    CONSTRAINT [PK_MedicineForm] PRIMARY KEY CLUSTERED ([Id] ASC),
+    CONSTRAINT [UQ_MedicineForm_Medicine_Form] UNIQUE NONCLUSTERED ([MedicineId] ASC, [FormId] ASC)
 );
 
 
@@ -589,6 +630,42 @@ ALTER TABLE [Lookup].[tblMedicines]
 
 
 GO
+PRINT N'Creating Default Constraints for [Lookup].[tblForm]...';
+
+
+GO
+ALTER TABLE [Lookup].[tblForm]
+    ADD CONSTRAINT [DF_Form_Id] DEFAULT (newid()) FOR [Id];
+
+ALTER TABLE [Lookup].[tblForm]
+    ADD CONSTRAINT [DF_Form_InsertedAt] DEFAULT (sysutcdatetime()) FOR [InsertedAt];
+
+ALTER TABLE [Lookup].[tblForm]
+    ADD CONSTRAINT [DF_Form_IsActive] DEFAULT ((1)) FOR [IsActive];
+
+ALTER TABLE [Lookup].[tblForm]
+    ADD CONSTRAINT [DF_Form_IsDeleted] DEFAULT ((0)) FOR [IsDeleted];
+
+
+GO
+PRINT N'Creating Default Constraints for [Lookup].[tblMedicineForm]...';
+
+
+GO
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [DF_MedicineForm_Id] DEFAULT (newid()) FOR [Id];
+
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [DF_MedicineForm_InsertedAt] DEFAULT (sysutcdatetime()) FOR [InsertedAt];
+
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [DF_MedicineForm_IsActive] DEFAULT ((1)) FOR [IsActive];
+
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [DF_MedicineForm_IsDeleted] DEFAULT ((0)) FOR [IsDeleted];
+
+
+GO
 PRINT N'Creating Default Constraint [Prescription].[DF_Prescriptions_Status]...';
 
 
@@ -919,6 +996,36 @@ PRINT N'Creating Foreign Key [Lookup].[FK_Medicines_InsertedBy_Users]...';
 GO
 ALTER TABLE [Lookup].[tblMedicines]
     ADD CONSTRAINT [FK_Medicines_InsertedBy_Users] FOREIGN KEY ([InsertedBy]) REFERENCES [Profile].[tblUsers] ([Id]);
+
+
+GO
+PRINT N'Creating Foreign Keys for [Lookup].[tblForm]...';
+
+
+GO
+ALTER TABLE [Lookup].[tblForm]
+    ADD CONSTRAINT [FK_Form_InsertedBy_Users] FOREIGN KEY ([InsertedBy]) REFERENCES [Profile].[tblUsers] ([Id]);
+
+ALTER TABLE [Lookup].[tblForm]
+    ADD CONSTRAINT [FK_Form_UpdatedBy_Users] FOREIGN KEY ([UpdatedBy]) REFERENCES [Profile].[tblUsers] ([Id]);
+
+
+GO
+PRINT N'Creating Foreign Keys for [Lookup].[tblMedicineForm]...';
+
+
+GO
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [FK_MedicineForm_Medicines] FOREIGN KEY ([MedicineId]) REFERENCES [Lookup].[tblMedicines] ([Id]);
+
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [FK_MedicineForm_Forms] FOREIGN KEY ([FormId]) REFERENCES [Lookup].[tblForm] ([Id]);
+
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [FK_MedicineForm_InsertedBy_Users] FOREIGN KEY ([InsertedBy]) REFERENCES [Profile].[tblUsers] ([Id]);
+
+ALTER TABLE [Lookup].[tblMedicineForm]
+    ADD CONSTRAINT [FK_MedicineForm_UpdatedBy_Users] FOREIGN KEY ([UpdatedBy]) REFERENCES [Profile].[tblUsers] ([Id]);
 
 
 GO
